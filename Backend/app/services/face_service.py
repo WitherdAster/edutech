@@ -1,15 +1,18 @@
+import os
+os.environ['TF_USE_LEGACY_KERAS'] = '1'
+
 from deepface import DeepFace
 import numpy as np
 
 
-def get_embedding(image_path):
+def get_embedding(image_path, detector_backend="opencv"):
 
     try:
 
         embedding = DeepFace.represent(
             img_path=image_path,
             model_name="ArcFace",
-            detector_backend="retinaface",
+            detector_backend=detector_backend,
             enforce_detection=True
         )
 

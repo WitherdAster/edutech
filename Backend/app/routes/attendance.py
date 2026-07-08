@@ -1,13 +1,15 @@
 from fastapi import APIRouter, UploadFile, File, Form
 from app.database import SessionLocal
-from app.models import Attendance, Student
+from app.models import Attendance, Student, Jadwal
 from app.services.face_service import get_embedding
-from app.services.recognition_service import recognize_multi_pose
+from app.services.recognition_service import recognize_face
+
+import time
 
 import shutil
 import uuid
 import os
-from datetime import datetime
+from datetime import date, datetime
 
 router = APIRouter(
     prefix="/attendance",
@@ -25,60 +27,73 @@ os.makedirs(
 @router.post("/")
 async def attendance(
     id_kelas: int = Form(...),
-    files: list[UploadFile] = File(...)
+    pose: str = Form(...),
+    file: UploadFile = File(...)
 ):
+
+    total_start_time = time.time()
 
     db = SessionLocal()
 
+    saved_path = None
+
     try:
+        t1 = time.time()
 
-        embeddings_absen = []
+        filename = (
+            f"{uuid.uuid4().hex}_{file.filename}"
+        )
 
-        saved_paths = []
+        filepath = os.path.join(
+            UPLOAD_DIR,
+            filename
+        )
 
-        # simpan semua file pose
-        for file in files:
+        with open(filepath, "wb") as buffer:
 
-            filename = (
-                f"{uuid.uuid4().hex}_{file.filename}"
+            shutil.copyfileobj(
+                file.file,
+                buffer
             )
 
-            filepath = os.path.join(
-                UPLOAD_DIR,
-                filename
-            )
+        print(
+            f"[PROFILE] Save File: {time.time()-t1:.3f}s"
+        )
 
-            with open(filepath, "wb") as buffer:
-                shutil.copyfileobj(
-                    file.file,
-                    buffer
-                )
+        saved_path = filepath
 
-            saved_paths.append(filepath)
+        t2 = time.time()
 
-            emb = get_embedding(filepath)
+        embedding_absen = get_embedding(
+            filepath
+        )
 
-            if emb is not None:
-                embeddings_absen.append(emb)
+        print(
+            f"[PROFILE] Get Embedding: {time.time()-t2:.3f}s"
+        )
 
-        # validasi pose lengkap
-        if len(embeddings_absen) < 3:
+        if embedding_absen is None:
 
             return {
                 "status": "gagal",
-                "message": "Embedding tidak lengkap"
+                "message": "Wajah tidak ditemukan"
             }
 
-        # recognition
-        best_id, similarity = recognize_multi_pose(
+        t3 = time.time()
+
+        best_id, similarity = recognize_face(
             db,
-            embeddings_absen
+            embedding_absen,
+            pose,
+            id_kelas=id_kelas
         )
 
-        # PAKSA menjadi float python
+        print(
+            f"[PROFILE] Recognize Face: {time.time()-t3:.3f}s"
+        )
+
         similarity = float(similarity)
 
-        # tidak dikenal
         if best_id is None:
 
             return {
@@ -86,12 +101,16 @@ async def attendance(
                 "similarity": similarity
             }
 
-        # cek kelas siswa
+        t4 = time.time()
+
         siswa = db.query(Student).filter(
             Student.id_siswa == best_id,
             Student.id_kelas == id_kelas
         ).first()
 
+        print(
+            f"[PROFILE] Query Student: {time.time()-t4:.3f}s"
+        )
         if siswa is None:
 
             return {
@@ -99,26 +118,38 @@ async def attendance(
                 "similarity": similarity
             }
 
-        print(
-            f"\nKEPUTUSAN AKHIR: "
-            f"{siswa.nama_siswa} "
-            f"dinyatakan hadir "
-            f"dengan similarity "
-            f"{similarity}"
-        )
+        today = date.today()
+        today_start = datetime(today.year, today.month, today.day)
+        today_end = datetime(today.year, today.month, today.day + 1)
 
-        # simpan absensi
-        attendance_data = Attendance(
-            id_siswa=siswa.id_siswa,
-            check_time=datetime.now(),
-            status="Hadir",
-            similarity=similarity,
-            image_path=saved_paths[0]
-        )
+        existing = db.query(Attendance).filter(
+            Attendance.id_siswa == siswa.id_siswa,
+            Attendance.check_time >= today_start,
+            Attendance.check_time < today_end,
+            Attendance.id_jadwal == None,
+        ).first()
 
-        db.add(attendance_data)
+        if existing:
+            existing.status = "Hadir"
+            existing.check_time = datetime.now()
+            existing.similarity = similarity
+            existing.image_path = ""
+        else:
+            attendance_data = Attendance(
+                id_siswa=siswa.id_siswa,
+                check_time=datetime.now(),
+                status="Hadir",
+                similarity=similarity,
+                image_path="",
+                id_jadwal=None,
+            )
+            db.add(attendance_data)
 
         db.commit()
+
+        print(
+            f"[PROFILE] TOTAL: {time.time()-total_start_time:.3f}s"
+        )
 
         return {
             "status": "Hadir",
@@ -128,7 +159,7 @@ async def attendance(
 
     except Exception as e:
 
-        print("ERROR ATTENDANCE:", e)
+        print("ERROR:", e)
 
         return {
             "status": "error",
@@ -136,4 +167,17 @@ async def attendance(
         }
 
     finally:
+
         db.close()
+
+        if saved_path:
+
+            try:
+
+                if os.path.exists(saved_path):
+
+                    os.remove(saved_path)
+
+            except Exception as e:
+
+                print("GAGAL HAPUS:", e)

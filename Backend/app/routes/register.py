@@ -22,9 +22,7 @@ poses = ["depan", "kanan", "kiri"]
 
 @router.post("/")
 async def register_student(
-    nisn: str = Form(...),
-    nama_siswa: str = Form(...),
-    id_kelas: int = Form(...),
+    id_siswa: int = Form(...),
     files: list[UploadFile] = File(...)
 ):
 
@@ -32,73 +30,50 @@ async def register_student(
 
     try:
 
-        # =========================
-        # VALIDASI FILE
-        # =========================
-
         if len(files) < 3:
             return {
                 "status": "error",
                 "message": "Harus 3 pose"
             }
 
-        # =========================
-        # SIMPAN SISWA
-        # =========================
+        siswa = db.query(Student).filter(
+            Student.id_siswa == id_siswa
+        ).first()
 
-        siswa = Student(
-            nisn=nisn,
-            nama_siswa=nama_siswa,
-            id_kelas=id_kelas,
-            embedding="[]"
-        )
+        if not siswa:
+            return {
+                "status": "error",
+                "message": "Siswa tidak ditemukan"
+            }
 
-        db.add(siswa)
-        db.commit()
-        db.refresh(siswa)
+        print(f"SISWA => {siswa.nama_siswa} (ID: {siswa.id_siswa})")
 
-        print(f"SISWA => {siswa.nama_siswa}")
+        # hapus face_data lama (re-register)
+        db.query(FaceData).filter(
+            FaceData.id_siswa == siswa.id_siswa
+        ).delete()
 
-        # =========================
-        # KUMPULKAN EMBEDDING
-        # =========================
-
+        # kumpulkan embedding
         embeddings = []
 
         for index, file in enumerate(files):
 
-            filename = (
-                f"{uuid.uuid4().hex}_"
-                f"{file.filename}"
-            )
+            filename = f"{uuid.uuid4().hex}_{file.filename}"
+            filepath = os.path.join(UPLOAD_DIR, filename)
 
-            filepath = os.path.join(
-                UPLOAD_DIR,
-                filename
-            )
-
-            # simpan file
             with open(filepath, "wb") as buffer:
-                shutil.copyfileobj(
-                    file.file,
-                    buffer
-                )
+                shutil.copyfileobj(file.file, buffer)
 
             print(f"FILE => {filepath}")
 
-            # ekstrak embedding
-            embedding = get_embedding(filepath)
+            embedding = get_embedding(filepath, detector_backend="retinaface")
 
             if embedding is None:
                 print("EMBEDDING GAGAL")
                 continue
 
-            print(
-                f"EMBEDDING BERHASIL "
-                f"{poses[index]}"
-            )
+            print(f"EMBEDDING BERHASIL {poses[index]}")
 
-            # simpan ke face_data
             face = FaceData(
                 id_siswa=siswa.id_siswa,
                 image_path=filepath,
@@ -108,53 +83,24 @@ async def register_student(
 
             db.add(face)
 
-            # simpan untuk master embedding
-            embeddings.append(
-                np.array(
-                    embedding,
-                    dtype=np.float32
-                )
-            )
-
-        # =========================
-        # VALIDASI EMBEDDING
-        # =========================
+            embeddings.append(np.array(embedding, dtype=np.float32))
 
         if len(embeddings) < 3:
-
             db.rollback()
-
             return {
                 "status": "error",
                 "message": "Embedding tidak lengkap"
             }
 
-        # =========================
-        # MASTER EMBEDDING
-        # =========================
+        # master embedding
+        master_embedding = np.mean(embeddings, axis=0)
+        master_embedding = master_embedding / np.linalg.norm(master_embedding)
 
-        master_embedding = np.mean(
-            embeddings,
-            axis=0
-        )
-
-        # normalize
-        master_embedding = (
-            master_embedding /
-            np.linalg.norm(master_embedding)
-        )
-
-        # simpan ke tabel siswa
-        siswa.embedding = json.dumps(
-            master_embedding.tolist()
-        )
+        siswa.embedding = json.dumps(master_embedding.tolist())
 
         db.commit()
 
-        print(
-            f"MASTER EMBEDDING "
-            f"{siswa.nama_siswa} BERHASIL"
-        )
+        print(f"MASTER EMBEDDING {siswa.nama_siswa} BERHASIL")
 
         return {
             "status": "success",
@@ -164,11 +110,8 @@ async def register_student(
         }
 
     except Exception as e:
-
         db.rollback()
-
         print("ERROR REGISTER:", e)
-
         return {
             "status": "error",
             "message": str(e)

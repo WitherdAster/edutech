@@ -3,7 +3,7 @@ import numpy as np
 
 from app.models import FaceData, Student
 
-THRESHOLD = 0.90
+THRESHOLD = 0.60
 
 
 def cosine_similarity(a, b):
@@ -16,91 +16,77 @@ def cosine_similarity(a, b):
     norm_a = np.linalg.norm(a)
     norm_b = np.linalg.norm(b)
 
-    similarity = dot / (norm_a * norm_b)
+    similarity = dot / (
+        norm_a * norm_b
+    )
 
-    # WAJIB float biasa python
     return float(similarity)
 
 
-def recognize_multi_pose(db, embeddings_absen):
+def recognize_face(
+    db,
+    embedding_absen,
+    pose,
+    id_kelas=None
+):
 
-    poses = ["depan", "kanan", "kiri"]
+    query = db.query(FaceData).filter(
+        FaceData.pose == pose
+    )
 
-    siswa_scores = {}
+    if id_kelas is not None:
+        query = query.join(Student).filter(
+            Student.id_kelas == id_kelas
+        )
 
-    for index, emb_absen in enumerate(embeddings_absen):
-
-        current_pose = poses[index]
-
-        pose_faces = db.query(FaceData).filter(
-            FaceData.pose == current_pose
-        ).all()
-
-        for face in pose_faces:
-
-            try:
-
-                registered_embedding = json.loads(
-                    face.embedding
-                )
-
-                similarity = cosine_similarity(
-                    emb_absen,
-                    registered_embedding
-                )
-
-                if face.id_siswa not in siswa_scores:
-                    siswa_scores[face.id_siswa] = []
-
-                siswa_scores[face.id_siswa].append(
-                    float(similarity)
-                )
-
-            except Exception as e:
-                print("ERROR COMPARE:", e)
+    face_data = query.all()
 
     best_id = None
     best_similarity = -1.0
 
     print("\n===== HASIL SIMILARITY =====")
 
-    for id_siswa, similarities in siswa_scores.items():
+    for face in face_data:
 
-        avg_similarity = float(
-            sum(similarities) / len(similarities)
-        )
+        try:
 
-        siswa = db.query(Student).filter(
-            Student.id_siswa == id_siswa
-        ).first()
+            registered_embedding = json.loads(
+                face.embedding
+            )
 
-        nama = siswa.nama_siswa if siswa else f"ID {id_siswa}"
+            similarity = cosine_similarity(
+                embedding_absen,
+                registered_embedding
+            )
 
-        print(
-            f"{nama} => similarity: {avg_similarity}"
-        )
+            siswa = db.query(Student).filter(
+                Student.id_siswa == face.id_siswa
+            ).first()
 
-        if avg_similarity > best_similarity:
-            best_similarity = float(avg_similarity)
-            best_id = id_siswa
+            nama = (
+                siswa.nama_siswa
+                if siswa
+                else f"ID {face.id_siswa}"
+            )
+
+            print(
+                f"{nama} => "
+                f"{similarity}"
+            )
+
+            if similarity > best_similarity:
+
+                best_similarity = similarity
+                best_id = face.id_siswa
+
+        except Exception as e:
+
+            print("ERROR:", e)
 
     print("================================")
 
-    if best_id is not None:
-
-        siswa_final = db.query(Student).filter(
-            Student.id_siswa == best_id
-        ).first()
-
-        if siswa_final:
-            print(
-                f"KEPUTUSAN AKHIR: "
-                f"{siswa_final.nama_siswa} "
-                f"dinyatakan hadir "
-                f"dengan similarity {best_similarity}"
-            )
-
     if best_similarity >= THRESHOLD:
-        return best_id, float(best_similarity)
 
-    return None, float(best_similarity)
+        return best_id, best_similarity
+
+    return None, best_similarity
