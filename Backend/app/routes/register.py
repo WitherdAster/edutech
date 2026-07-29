@@ -7,6 +7,7 @@ import shutil
 import uuid
 import json
 import os
+import tempfile
 import numpy as np
 
 router = APIRouter(
@@ -14,7 +15,7 @@ router = APIRouter(
     tags=["Register"]
 )
 
-UPLOAD_DIR = "uploads_register"
+UPLOAD_DIR = os.getenv("REGISTER_UPLOAD_DIR", tempfile.gettempdir())
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 poses = ["depan", "kanan", "kiri"]
@@ -27,6 +28,7 @@ async def register_student(
 ):
 
     db = SessionLocal()
+    saved_paths = []
 
     try:
 
@@ -64,6 +66,8 @@ async def register_student(
             with open(filepath, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
+            saved_paths.append(filepath)
+
             print(f"FILE => {filepath}")
 
             embedding = get_embedding(filepath, detector_backend="retinaface")
@@ -76,7 +80,7 @@ async def register_student(
 
             face = FaceData(
                 id_siswa=siswa.id_siswa,
-                image_path=filepath,
+                image_path="",
                 embedding=json.dumps(embedding),
                 pose=poses[index]
             )
@@ -119,3 +123,10 @@ async def register_student(
 
     finally:
         db.close()
+
+        for fp in saved_paths:
+            try:
+                if os.path.exists(fp):
+                    os.remove(fp)
+            except Exception as e:
+                print("GAGAL HAPUS:", e)

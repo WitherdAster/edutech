@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+deepface
+tf-keras
+opencv-python
+numpy
+sqlalchemy
+pymysql
+python-multipart
+python-jose
+passlib
+openpyxl
+bcrypt==4.0.1
+python-dotenv

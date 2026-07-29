@@ -1,0 +1,449 @@
+@startuml EduTech - Class Diagram
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam class {
+  BorderColor #2E4057
+  BackgroundColor #FFFFFF
+  FontColor #1A1A2E
+}
+skinparam package {
+  BackgroundColor #F4F6F9
+  BorderColor #2E4057
+  FontColor #1A1A2E
+  FontStyle bold
+}
+skinparam arrow {
+  Color #6B7280
+  Thickness 1.5
+}
+hide empty members
+
+' ============================================================
+' PACKAGE: BACKEND MODELS
+' ============================================================
+package "Backend - Models (SQLAlchemy)" as ModelPkg {
+
+  class Jurusan {
+    - id_jurusan : int
+    - nama_jurusan : str
+    --
+    + get_kelas_list() : list
+  }
+
+  class Kelas {
+    - id_kelas : int
+    - nama_kelas : str
+    - id_jurusan : int
+    --
+    + get_jurusan() : Jurusan
+    + get_siswa_list() : list
+  }
+
+  class Student {
+    - id_siswa : int
+    - nisn : str
+    - nama_siswa : str
+    - id_kelas : int
+    - jenis_kelamin : Enum
+    - tempat_lahir : str
+    - tanggal_lahir : Date
+    - agama : str
+    - alamat : Text
+    - no_telp : str
+    - tahun_masuk : int
+    - created_at : DateTime
+    - embedding : Text
+    --
+    + get_kelas_rel() : Kelas
+    + get_face_data_list() : list
+    + get_absensi_list() : list
+  }
+
+  class FaceData {
+    - id_face : int
+    - id_siswa : int
+    - image_path : Text
+    - embedding : Text
+    - pose : str
+    - created_at : DateTime
+    --
+    + get_siswa_rel() : Student
+  }
+
+  class Attendance {
+    - id_absensi : int
+    - id_siswa : int
+    - id_jadwal : int
+    - check_time : DateTime
+    - status : str
+    - similarity : Float
+    - image_path : Text
+    - status_manual : str
+    - keterangan : Text
+    - updated_by : int
+    - updated_at : DateTime
+    --
+    + get_siswa_rel() : Student
+    + get_jadwal_rel() : Jadwal
+  }
+
+  class User {
+    - id_user : int
+    - username : str
+    - password : str
+    - role : Enum
+    - nama : str
+    - is_active : bool
+    - created_at : DateTime
+    --
+    + __repr__() : str
+    + get_guru() : Guru
+    + get_guru_kelas_list() : list
+  }
+
+  class Guru {
+    - id_guru : int
+    - id_user : int
+    - nip : str
+    - jenis_kelamin : Enum
+    - tempat_lahir : str
+    - tanggal_lahir : Date
+    - agama : str
+    - alamat : Text
+    - no_telp : str
+    --
+    + get_user_rel() : User
+  }
+
+  class GuruKelas {
+    - id : int
+    - id_user : int
+    - id_kelas : int
+    --
+    + get_user_rel() : User
+    + get_kelas_rel() : Kelas
+  }
+
+  class MataPelajaran {
+    - id_mapel : int
+    - nama_mapel : str
+    --
+    + get_jadwal_list() : list
+  }
+
+  class Jadwal {
+    - id_jadwal : int
+    - id_mapel : int
+    - id_user : int
+    - id_kelas : int
+    - hari : Enum
+    - jam_mulai : Time
+    - jam_selesai : Time
+    --
+    + get_mapel_rel() : MataPelajaran
+    + get_user_rel() : User
+    + get_kelas_rel() : Kelas
+    + get_absensi_list() : list
+  }
+
+}
+
+' ============================================================
+' PACKAGE: BACKEND SERVICES
+' ============================================================
+package "Backend - Services" as ServicePkg {
+
+  class AuthService {
+    --
+    {static} + hash_password(password) : str
+    {static} + verify_password(plain, hashed) : bool
+    {static} + create_access_token(data) : str
+    {static} + get_current_user(credentials, db) : User
+    {static} + get_current_student(credentials, db) : Student
+  }
+
+  class FaceService {
+    --
+    {static} + get_embedding(path, detector) : list
+  }
+
+  class RecognitionService {
+    --
+    {static} + cosine_similarity(a, b) : float
+    {static} + recognize_face(db, embedding, pose, kelas) : tuple
+  }
+
+  class AugmentationService {
+    --
+    {static} + augment_image(path) : list
+  }
+
+}
+
+' ============================================================
+' PACKAGE: API ROUTES
+' ============================================================
+package "Backend - API Routes" as RoutePkg {
+
+  class AttendanceRoutes {
+    --
+    + POST /attendance/ : scan wajah
+  }
+
+  class RegisterRoutes {
+    --
+    + POST /register/ : daftar wajah
+  }
+
+  class AuthRoutes {
+    --
+    + POST /api/auth/login : login guru/tu
+    + POST /api/auth/siswa : login siswa
+    + GET /api/me : profil user
+  }
+
+  class SiswaRoutes {
+    --
+    + GET /api/siswa/me : profil siswa
+    + GET /api/siswa/absensi : absensi hari ini
+    + GET /api/siswa/absensi/history : riwayat absensi
+  }
+
+  class GuruRoutes {
+    --
+    + GET /api/guru : list guru
+    + POST /api/admin/guru : tambah guru
+    + PUT /api/admin/guru/{id} : ubah guru
+    + DELETE /api/admin/guru/{id} : nonaktifkan guru
+    + POST /api/admin/guru/{id}/kelas : assign kelas
+    + DELETE /api/admin/guru/{id}/kelas/{id_kelas} : hapus assign
+  }
+
+  class SiswaCRUDRoutes {
+    --
+    + GET /api/siswa : list siswa
+    + POST /api/admin/siswa : tambah siswa
+    + PUT /api/admin/siswa/{id} : ubah siswa
+    + DELETE /api/admin/siswa/{id} : hapus siswa
+  }
+
+  class AbsensiRoutes {
+    --
+    + GET /api/absensi : list absensi
+    + POST /api/absensi : buat manual
+    + PUT /api/absensi/{id} : update status
+    + GET /api/absensi/hari-ini : absensi per jadwal
+    + GET /api/absensi/export : export excel
+  }
+
+  class MasterDataRoutes {
+    --
+    + CRUD /api/jurusan : kelola jurusan
+    + CRUD /api/kelas : kelola kelas
+    + CRUD /api/mapel : kelola mapel
+    + CRUD /api/jadwal : kelola jadwal
+  }
+
+  class DashboardRoutes {
+    --
+    + GET /api/dashboard : statistik dashboard
+  }
+
+  class PublicRoutes {
+    --
+    + GET /api/public/kelas : daftar kelas
+    + GET /api/public/siswa/{id_kelas} : siswa by kelas
+  }
+
+}
+
+' ============================================================
+' PACKAGE: FRONTEND COMPONENTS
+' ============================================================
+package "Frontend - React Components" as FrontPkg {
+
+  class ApiClient {
+    --
+    {static} + get(url) : response
+    {static} + post(url, data) : response
+    {static} + put(url, data) : response
+    {static} + delete(url) : response
+  }
+
+  class AuthProvider {
+    --
+    + login(username, password) : dict
+    + logout() : void
+    + loginSiswa(nisn, nama) : dict
+    + logoutSiswa() : void
+  }
+
+  class ProtectedRoute {
+    --
+    + render() : Route / Navigate
+  }
+
+  class AppLayout {
+    --
+    + onMenuClick(key) : void
+    + render() : Layout
+  }
+
+  class LoginPage {
+    --
+    + onFinish(username, password) : void
+    + render() : Form
+  }
+
+  class SiswaLoginPage {
+    --
+    + onFinish(nisn, nama) : void
+    + render() : Form
+  }
+
+  class DashboardPage {
+    --
+    + fetchDashboard() : void
+    + fetchJadwal() : void
+    + render() : Cards
+  }
+
+  class AbsensiPage {
+    --
+    + fetchData() : void
+    + openEditModal(record) : void
+    + handleEdit(values) : void
+    + render() : Table
+  }
+
+  class SiswaPage {
+    --
+    + fetchSiswa() : void
+    + openCreateModal() : void
+    + openEditModal(record) : void
+    + handleSave(values) : void
+    + handleDelete(id) : void
+    + render() : Table
+  }
+
+  class GuruPage {
+    --
+    + fetchGuru() : void
+    + handleSave(values) : void
+    + handleDelete(id) : void
+    + openKelasModal(record) : void
+    + handleAssignKelas(id_kelas) : void
+    + handleRemoveKelas(id_kelas) : void
+    + render() : Table
+  }
+
+  class JadwalViewPage {
+    --
+    + fetchJadwal(hari) : void
+    + render() : Table
+  }
+
+  class AdminJadwalPage {
+    --
+    + fetchData() : void
+    + handleCreate(values) : void
+    + handleDelete(id) : void
+    + render() : Table
+  }
+
+  class ExportPage {
+    --
+    + handleExport(values) : void
+    + render() : Form
+  }
+
+  class MasterDataPage {
+    --
+    + fetchData() : void
+    + handleSave(values) : void
+    + handleDelete(id) : void
+    + render() : Table
+  }
+
+  class SiswaDashboardPage {
+    --
+    + fetchToday() : void
+    + fetchHistory(page) : void
+    + render() : Cards
+  }
+
+}
+
+' ============================================================
+' RELATIONS
+' ============================================================
+
+' --- Database Relations ---
+Jurusan "1" -- "0..*" Kelas
+Kelas   "1" -- "0..*" Student
+Student "1" -- "0..*" FaceData
+Student "1" -- "0..*" Attendance
+User    "1" -- "0..1" Guru
+User    "1" -- "0..*" GuruKelas
+Kelas   "1" -- "0..*" GuruKelas
+Kelas   "1" -- "0..*" Jadwal
+User    "1" -- "0..*" Jadwal
+MataPelajaran "1" -- "0..*" Jadwal
+Jadwal  "1" -- "0..*" Attendance
+User    "1" -- "0..*" Attendance
+
+' --- Service Dependencies ---
+AttendanceRoutes ..> FaceService
+AttendanceRoutes ..> RecognitionService
+RegisterRoutes ..> FaceService
+RecognitionService ..> FaceData
+RecognitionService ..> Student
+
+' --- Route to Model ---
+SiswaCRUDRoutes ..> Student
+GuruRoutes ..> User
+GuruRoutes ..> Guru
+GuruRoutes ..> GuruKelas
+AbsensiRoutes ..> Attendance
+AbsensiRoutes ..> Student
+AbsensiRoutes ..> Jadwal
+DashboardRoutes ..> Student
+DashboardRoutes ..> Attendance
+DashboardRoutes ..> Jadwal
+SiswaRoutes ..> Attendance
+SiswaRoutes ..> Jadwal
+MasterDataRoutes ..> Jurusan
+MasterDataRoutes ..> Kelas
+MasterDataRoutes ..> MataPelajaran
+MasterDataRoutes ..> Jadwal
+PublicRoutes ..> Kelas
+PublicRoutes ..> Student
+
+' --- Frontend to API ---
+ApiClient ..> AuthRoutes
+ApiClient ..> DashboardRoutes
+ApiClient ..> AbsensiRoutes
+ApiClient ..> SiswaCRUDRoutes
+ApiClient ..> GuruRoutes
+ApiClient ..> MasterDataRoutes
+ApiClient ..> SiswaRoutes
+ApiClient ..> PublicRoutes
+ApiClient ..> AttendanceRoutes
+
+AuthProvider ..> ApiClient
+ProtectedRoute ..> AuthProvider
+AppLayout ..> AuthProvider
+LoginPage ..> AuthProvider
+SiswaLoginPage ..> AuthProvider
+
+AbsensiPage ..> ApiClient
+DashboardPage ..> ApiClient
+SiswaPage ..> ApiClient
+GuruPage ..> ApiClient
+JadwalViewPage ..> ApiClient
+AdminJadwalPage ..> ApiClient
+ExportPage ..> ApiClient
+MasterDataPage ..> ApiClient
+SiswaDashboardPage ..> ApiClient
+
+@enduml

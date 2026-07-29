@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="EduTech" modified="2026-07-02T12:00:00.000Z" agent="Python" version="24.2.5">
+  <diagram id="diagram1" name="EduTech Class Diagram">
+    <mxGraphModel dx="0" dy="0" grid="1" gridSize="10" guides="1" tooltips="1"
+      connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400"
+      pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="101" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>Jurusan</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_jurusan: int (PK)<br>- nama_jurusan: str(100)</div><div style='padding:6px 10px;font-size:11px;'>+ get_kelas_list(): list[Kelas]</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="60" y="40" width="250" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="102" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>Kelas</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_kelas: int (PK)<br>- nama_kelas: str(50)<br>- id_jurusan: int (FK)</div><div style='padding:6px 10px;font-size:11px;'>+ get_jurusan(): Jurusan<br>+ get_siswa_list(): list[Student]<br>+ get_guru_kelas_list(): list[GuruKelas]</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="60" y="185" width="250" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="103" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>Student</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_siswa: int (PK)<br>- nisn: str(20) [unique]<br>- nama_siswa: str(100)<br>- id_kelas: int (FK)<br>- jenis_kelamin: Enum('L','P')<br>- tempat_lahir: str(50)<br>- tanggal_lahir: Date<br>- agama: str(20)<br>- alamat: Text<br>- no_telp: str(20)<br>- tahun_masuk: int<br>- created_at: DateTime<br>- embedding: Text</div><div style='padding:6px 10px;font-size:11px;'>+ get_kelas_rel(): Kelas<br>+ get_face_data_list(): list[FaceData]<br>+ get_absensi_list(): list[Attendance]</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="60" y="380" width="250" height="330" as="geometry" />
+        </mxCell>
+        <mxCell id="104" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>FaceData</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_face: int (PK)<br>- id_siswa: int (FK)<br>- image_path: Text<br>- embedding: Text<br>- pose: str(20)<br>- created_at: DateTime</div><div style='padding:6px 10px;font-size:11px;'>+ get_siswa_rel(): Student</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="60" y="750" width="250" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="105" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>MataPelajaran</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_mapel: int (PK)<br>- nama_mapel: str(100)</div><div style='padding:6px 10px;font-size:11px;'>+ get_jadwal_list(): list[Jadwal]</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="550" y="40" width="250" height="105" as="geometry" />
+        </mxCell>
+        <mxCell id="106" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>Jadwal</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_jadwal: int (PK)<br>- id_mapel: int (FK)<br>- id_user: int (FK)<br>- id_kelas: int (FK)<br>- hari: Enum(Senin..Jumat)<br>- jam_mulai: Time<br>- jam_selesai: Time</div><div style='padding:6px 10px;font-size:11px;'>+ get_mapel_rel(): MataPelajaran<br>+ get_user_rel(): User<br>+ get_kelas_rel(): Kelas<br>+ get_absensi_list(): list[Attendance]</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="550" y="185" width="250" height="230" as="geometry" />
+        </mxCell>
+        <mxCell id="107" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>Attendance</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_absensi: int (PK)<br>- id_siswa: int (FK)<br>- id_jadwal: int (FK) [null]<br>- check_time: DateTime<br>- status: str(50)<br>- similarity: Float<br>- image_path: Text<br>- status_manual: str(20) [null]<br>- keterangan: Text [null]<br>- updated_by: int (FK) [null]<br>- updated_at: DateTime [null]</div><div style='padding:6px 10px;font-size:11px;'>+ get_siswa_rel(): Student<br>+ get_jadwal_rel(): Jadwal<br>+ get_updated_by_rel(): Use</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="550" y="460" width="250" height="310" as="geometry" />
+        </mxCell>
+        <mxCell id="108" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>User</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_user: int (PK)<br>- username: str(50) [unique]<br>- password: str(255)<br>- role: Enum('guru','tu')<br>- nama: str(100)<br>- is_active: Boolean<br>- created_at: DateTime</div><div style='padding:6px 10px;font-size:11px;'>+ get_guru(): Guru<br>+ get_guru_kelas_list(): list[GuruKelas]</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="40" width="250" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="109" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>Guru</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id_guru: int (PK)<br>- id_user: int (FK) [unique]<br>- nip: str(30) [unique]<br>- jenis_kelamin: Enum('L','P')<br>- tempat_lahir: str(50)<br>- tanggal_lahir: Date<br>- agama: str(20)<br>- alamat: Text<br>- no_telp: str(20)</div><div style='padding:6px 10px;font-size:11px;'>+ get_user_rel(): Use</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="285" width="250" height="225" as="geometry" />
+        </mxCell>
+        <mxCell id="110" value="<div style='border-bottom:1px solid #000000;background:#d4d9e6;padding:8px;text-align:center;font-weight:bold;font-size:13px;'>GuruKelas</div><div style='padding:6px 10px;border-bottom:1px solid #000000;font-size:11px;'>- id: int (PK)<br>- id_user: int (FK)<br>- id_kelas: int (FK)</div><div style='padding:6px 10px;font-size:11px;'>+ get_user_rel(): User<br>+ get_kelas_rel(): Kelas</div>" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1;verticalAlign=top;fontSize=11;fontFamily=Helvetica;" vertex="1" parent="1">
+          <mxGeometry x="1040" y="555" width="250" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="111" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="101" target="102">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="112" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="111">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="113" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="111">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="114" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="102" target="103">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="115" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="114">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="116" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="114">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="117" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="103" target="104">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="118" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="117">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="119" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="117">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="120" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="105" target="106">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="121" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="120">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="122" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="120">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="123" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="106" target="107">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="124" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="123">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="125" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="123">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="126" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="108" target="109">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="127" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="126">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="128" value="1" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="126">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="129" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="108" target="110">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="130" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="129">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="131" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="129">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="132" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="102" target="110">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="133" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="132">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="134" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="132">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="135" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="103" target="107">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="136" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="135">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="137" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="135">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="138" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="106" target="107">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="139" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="138">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="140" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="138">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="141" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="108" target="106">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="142" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="141">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="143" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="141">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="144" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="108" target="107">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="145" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="144">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="146" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="144">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="147" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#555;strokeWidth=1;fontSize=11;" edge="1" parent="1" source="102" target="106">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="148" value="1" style="edgeLabel;html=1;align=right;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="147">
+          <mxGeometry x="-0.05" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+        <mxCell id="149" value="*" style="edgeLabel;html=1;align=left;verticalAlign=bottom;fontSize=11;fontColor=#333;" vertex="1" connectable="0" parent="147">
+          <mxGeometry x="0.95" relative="1" as="geometry"><mxPoint as="offset" /></mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

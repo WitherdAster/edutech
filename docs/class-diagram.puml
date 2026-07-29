@@ -1,0 +1,348 @@
+@startuml EduTech - Class Diagram
+'
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam package {
+  BackgroundColor #F0F4FF
+  BorderColor #4A6CF7
+  FontColor #1A1A2E
+  FontStyle bold
+}
+skinparam class {
+  BorderColor #4A6CF7
+  BackgroundColor #E8EDFF
+  FontColor #1A1A2E
+}
+skinparam interface {
+  BorderColor #0EA5E9
+  BackgroundColor #E0F7FA
+  FontColor #0EA5E9
+  FontStyle bold
+}
+skinparam arrow {
+  Color #6B7280
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #D4A017
+}
+skinparam linetype ortho
+
+' ============================================================
+' PACKAGE: DATABASE MODEL (SQLAlchemy - Backend)
+' ============================================================
+package "Model Database\n(SQLAlchemy / MySQL)" as ModelPkg {
+
+  class Jurusan {
+    + id_jurusan: int {PK}
+    + nama_jurusan: string
+  }
+
+  class Kelas {
+    + id_kelas: int {PK}
+    + nama_kelas: string
+    + id_jurusan: int {FK}
+  }
+
+  class Siswa {
+    + id_siswa: int {PK}
+    + nisn: string {unique}
+    + nama_siswa: string
+    + id_kelas: int {FK}
+    + jenis_kelamin: enum(L/P)
+    + tempat_lahir: string
+    + tanggal_lahir: date
+    + agama: string
+    + alamat: string
+    + no_telp: string
+    + tahun_masuk: string
+    + created_at: datetime
+    + embedding: text
+  }
+
+  class FaceData {
+    + id_face: int {PK}
+    + id_siswa: int {FK}
+    + image_path: string
+    + embedding: text
+    + pose: enum(depan/kanan/kiri)
+    + created_at: datetime
+  }
+
+  class Absensi {
+    + id_absensi: int {PK}
+    + id_siswa: int {FK}
+    + check_time: datetime
+    + status: string
+    + similarity: float
+    + image_path: string
+    + status_manual: string
+    + keterangan: string
+    + updated_by: int {FK}
+    + updated_at: datetime
+  }
+
+  class User {
+    + id_user: int {PK}
+    + username: string {unique}
+    + password: string
+    + role: enum(guru/tu)
+    + nama: string
+    + is_active: bool
+    + created_at: datetime
+  }
+
+  class Guru {
+    + id_guru: int {PK}
+    + id_user: int {FK, unique}
+    + nip: string {unique}
+    + jenis_kelamin: enum(L/P)
+    + tempat_lahir: string
+    + tanggal_lahir: date
+    + agama: string
+    + alamat: string
+    + no_telp: string
+  }
+
+  class GuruKelas {
+    + id: int {PK}
+    + id_user: int {FK}
+    + id_kelas: int {FK}
+  }
+
+}
+
+' ============================================================
+' PACKAGE: ANDROID APP
+' ============================================================
+package "Aplikasi Android\n(Kotlin)" as AndroidPkg {
+
+  class MainActivity {
+    + onCreate()
+    + btnRegister.onClick()
+    + btnMulaiAbsensi.onClick()
+  }
+
+  class RegisterActivity {
+    - captureState: int
+    - lastCaptureTime: long
+    - capturedFiles: List<File>
+    - selectedKelasId: int
+    - selectedSiswaId: int
+    + onCreate()
+    + loadKelas()
+    + loadSiswa(idKelas)
+    + startCamera()
+    + updatePoseUI()
+    + savePose(imageProxy, face)
+    + uploadRegister()
+    + allPermissionsGranted()
+  }
+
+  class CameraActivity {
+    - isScanning: bool
+    - capturedFile: File
+    - detectedPose: string
+    - lastCaptureTime: long
+    - selectedKelasId: int
+    + onCreate()
+    + loadKelas()
+    + startCamera()
+    + captureBitmap(face, imageProxy)
+    + uploadAttendance()
+    + allPermissionsGranted()
+  }
+
+  interface ApiService {
+    + uploadAttendance(...)
+    + registerStudent(...)
+    + getKelas()
+    + getSiswaByKelas(id_kelas)
+  }
+
+  class ApiClient {
+    {static} - instance: ApiClient
+    {static} + getInstance(): ApiClient
+  }
+
+  class AttendanceResponse {
+    + nama_siswa: string?
+    + similarity: double
+    + status: string
+  }
+
+  class RegisterResponse {
+    + status: string?
+    + message: string?
+    + id_siswa: int?
+    + nama_siswa: string?
+  }
+
+  class KelasItem {
+    + id_kelas: int
+    + nama_kelas: string
+  }
+
+  class SiswaItem {
+    + id_siswa: int
+    + nisn: string
+    + nama_siswa: string
+  }
+
+}
+
+' ============================================================
+' PACKAGE: BACKEND ROUTES & SERVICES (Python FastAPI)
+' ============================================================
+package "Backend API\n(Python FastAPI)" as BackendPkg {
+
+  class AuthService {
+    + create_access_token(data)
+    + verify_token(token)
+    + get_password_hash(password)
+    + verify_password(plain, hashed)
+    + get_current_user()
+    + get_current_student()
+  }
+
+  class FaceService {
+    + extract_embedding(image_path)
+    + normalize_embedding(embedding)
+  }
+
+  class RecognitionService {
+    + find_best_match(embedding, class_id, pose)
+    - cosine_similarity(a, b)
+  }
+
+  class AugmentationService {
+    + augment_image(image_path)
+    + flip(image)
+    + rotate(image, angle)
+    + adjust_brightness(image, value)
+    + blur(image)
+    + adjust_contrast(image, value)
+    + zoom(image, factor)
+    + sharpen(image)
+  }
+
+  class RouteRegister {
+    + post(image_files, id_siswa)
+  }
+
+  class RouteAttendance {
+    + post(file, id_kelas, pose)
+  }
+
+  class RoutePublic {
+    + get_kelas()
+    + get_siswa_by_kelas(id_kelas)
+  }
+
+  class RouteSiswa {
+    + get_me()
+    + get_absensi()
+    + get_history()
+  }
+
+  class RouteAuth {
+    + login_guru_tu()
+    + login_siswa()
+  }
+
+  class RouteAdminGuru {
+    + list()
+    + create()
+    + update()
+    + delete()
+    + assign_kelas()
+    + remove_kelas()
+  }
+
+  class RouteAdminSiswa {
+    + list()
+    + create()
+    + update()
+    + delete()
+  }
+
+  class RouteAbsensi {
+    + list()
+    + update_manual()
+    + init_harian()
+    + export_excel()
+  }
+
+  class RouteDashboard {
+    + get_stats()
+  }
+
+}
+
+' ============================================================
+' RELASI: DATABASE MODEL
+' ============================================================
+Jurusan "1" -- "0..*" Kelas : memiliki
+Kelas   "1" -- "0..*" Siswa : memiliki
+Siswa   "1" -- "0..*" FaceData : memiliki
+Siswa   "1" -- "0..*" Absensi : memiliki
+User    "1" -- "0..1" Guru : memiliki
+User    "1" -- "0..*" GuruKelas : mengajar
+Kelas   "1" -- "0..*" GuruKelas : diampu
+User    "1" -- "0..*" Absensi : mengubah
+
+' ============================================================
+' RELASI: ANDROID
+' ============================================================
+ApiClient ..> ApiService : <<create>>
+ApiClient o-- ApiService
+
+MainActivity ..> RegisterActivity : navigasi >
+MainActivity ..> CameraActivity : navigasi >
+
+RegisterActivity ..> ApiService : using >
+RegisterActivity ..> KelasItem
+RegisterActivity ..> SiswaItem
+RegisterActivity ..> RegisterResponse
+
+CameraActivity ..> ApiService : using >
+CameraActivity ..> KelasItem
+CameraActivity ..> AttendanceResponse
+
+' ============================================================
+' RELASI: ANDROID API DTOs
+' ============================================================
+ApiService ..> AttendanceResponse : returns
+ApiService ..> RegisterResponse : returns
+ApiService ..> KelasItem : returns
+ApiService ..> SiswaItem : returns
+
+' ============================================================
+' RELASI: BACKEND ROUTES -> SERVICES -> MODELS
+' ============================================================
+RouteRegister ..> FaceService : using
+RouteRegister ..> RoutePublic : using
+RouteAttendance ..> RecognitionService : using
+RouteAttendance ..> FaceService : using
+RecognitionService ..> FaceData : query
+RouteAdminSiswa ..> Siswa : CRUD
+RouteAdminGuru ..> Guru : CRUD
+RouteAdminGuru ..> GuruKelas : assign
+RouteAbsensi ..> Absensi : CRUD
+RouteAbsensi ..> Siswa : query
+RouteDashboard ..> Siswa : query
+RouteDashboard ..> Absensi : query
+RouteSiswa ..> Absensi : query
+
+' ============================================================
+' RELASI: ANDROID ke BACKEND (NETWORK)
+' ============================================================
+note "Jaringan\nHTTP (Retrofit)" as NetworkNote
+ApiService .. NetworkNote : request
+NetworkNote .. RouteRegister : POST /register/
+NetworkNote .. RouteAttendance : POST /attendance/
+NetworkNote .. RoutePublic : GET /api/public/*
+NetworkNote .. RouteSiswa : GET /api/siswa/*
+NetworkNote .. RouteAuth : POST /api/auth/*
+
+@enduml

@@ -9,6 +9,7 @@ import time
 import shutil
 import uuid
 import os
+import tempfile
 from datetime import date, datetime
 
 router = APIRouter(
@@ -16,7 +17,7 @@ router = APIRouter(
     tags=["Attendance"]
 )
 
-UPLOAD_DIR = "uploads_attendance"
+UPLOAD_DIR = os.getenv("ATTENDANCE_UPLOAD_DIR", tempfile.gettempdir())
 
 os.makedirs(
     UPLOAD_DIR,

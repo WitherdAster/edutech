@@ -1,0 +1,131 @@
+@startuml EduTech - Entity Relationship Diagram
+'
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam entity {
+  BorderColor #4A6CF7
+  BackgroundColor #E8EDFF
+  FontColor #1A1A2E
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #D4A017
+}
+
+left to right direction
+
+' ============================================================
+' TABEL-TABEL (ENTITIES)
+' ============================================================
+
+entity jurusan {
+  * id_jurusan : INT <<PK>>
+  --
+  nama_jurusan : VARCHAR
+}
+
+entity kelas {
+  * id_kelas : INT <<PK>>
+  --
+  nama_kelas : VARCHAR
+  * id_jurusan : INT <<FK>>
+}
+
+entity siswa {
+  * id_siswa : INT <<PK>>
+  --
+  * nisn : VARCHAR <<UQ>>
+  nama_siswa : VARCHAR
+  * id_kelas : INT <<FK>>
+  jenis_kelamin : ENUM(L/P)
+  tempat_lahir : VARCHAR
+  tanggal_lahir : DATE
+  agama : VARCHAR
+  alamat : TEXT
+  no_telp : VARCHAR
+  tahun_masuk : VARCHAR
+  created_at : DATETIME
+  embedding : TEXT
+}
+
+entity face_data {
+  * id_face : INT <<PK>>
+  --
+  * id_siswa : INT <<FK>>
+  image_path : VARCHAR
+  embedding : TEXT
+  pose : ENUM(depan/kanan/kiri)
+  created_at : DATETIME
+}
+
+entity absensi {
+  * id_absensi : INT <<PK>>
+  --
+  * id_siswa : INT <<FK>>
+  check_time : DATETIME
+  status : VARCHAR
+  similarity : FLOAT
+  image_path : VARCHAR
+  status_manual : VARCHAR
+  keterangan : TEXT
+  updated_by : INT <<FK>>
+  updated_at : DATETIME
+}
+
+entity users {
+  * id_user : INT <<PK>>
+  --
+  * username : VARCHAR <<UQ>>
+  password : VARCHAR
+  role : ENUM(guru/tu)
+  nama : VARCHAR
+  is_active : TINYINT
+  created_at : DATETIME
+}
+
+entity guru {
+  * id_guru : INT <<PK>>
+  --
+  * id_user : INT <<FK,UQ>>
+  * nip : VARCHAR <<UQ>>
+  jenis_kelamin : ENUM(L/P)
+  tempat_lahir : VARCHAR
+  tanggal_lahir : DATE
+  agama : VARCHAR
+  alamat : TEXT
+  no_telp : VARCHAR
+}
+
+entity guru_kelas {
+  * id : INT <<PK>>
+  --
+  * id_user : INT <<FK>>
+  * id_kelas : INT <<FK>>
+}
+
+' ============================================================
+' RELASI
+' ============================================================
+
+jurusan ||--o{ kelas : "memiliki"
+kelas   ||--o{ siswa : "memiliki"
+kelas   ||--o{ guru_kelas : "diampu"
+siswa   ||--o{ face_data : "memiliki"
+siswa   ||--o{ absensi : "memiliki"
+users   ||--o| guru : "memiliki"
+users   ||--o{ guru_kelas : "mengajar"
+users   ||--o{ absensi : "mengubah"
+
+note on link
+  `kelas` dan `guru_kelas`
+  menghubungkan Guru
+  ke kelas yang diampu
+end note
+
+note "Siswa tidak boleh\nmembawa HP ke sekolah.\nPresensi via Android\ndi perangkat sekolah." as NoteSiswa
+note bottom of siswa : NoteSiswa
+
+note "Orang Tua login via\nweb dengan NISN anak\nuntuk pantau kehadiran." as NoteOrtu
+note bottom of absensi : NoteOrtu
+
+@enduml

@@ -1,0 +1,146 @@
+@startuml EduTech - Use Case Diagram
+'
+!theme plain
+skinparam backgroundColor #FEFEFE
+skinparam package {
+  BackgroundColor #F0F4FF
+  BorderColor #4A6CF7
+  FontColor #1A1A2E
+  FontStyle bold
+}
+skinparam actor {
+  BorderColor #2C3E50
+  FontColor #2C3E50
+  FontStyle bold
+}
+skinparam usecase {
+  BorderColor #4A6CF7
+  BackgroundColor #E8EDFF
+  FontColor #1A1A2E
+}
+skinparam arrow {
+  Color #6B7280
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #D4A017
+}
+
+left to right direction
+
+' ============================================================
+' ACTORS
+' ============================================================
+actor "Siswa\n(Android)" as Siswa
+actor "Orang Tua / Wali\n(Web Browser)" as OrangTua
+actor "Guru\n(Web Browser)" as Guru
+actor "Tata Usaha (TU)\n(Web Browser)" as TU
+actor "Sistem\n(DeepFace + MLKit)" as Sistem
+
+' ============================================================
+' BOUNDARY: APLIKASI ANDROID
+' ============================================================
+package "Aplikasi Android\n(Presensi Siswa)" as AndroidPkg {
+  usecase "Registrasi Wajah" as UC_Regis
+  usecase "Capture 3 Pose Wajah\n(Depan, Kanan, Kiri)" as UC_Capture
+  usecase "Deteksi Posisi Kepala\n(MLKit Yaw Angle)" as UC_Deteksi
+  usecase "Scan Presensi" as UC_Scan
+  usecase "Verifikasi Wajah\n(DeepFace ArcFace)" as UC_Verif
+  usecase "Catat Presensi" as UC_Catat
+}
+
+' ============================================================
+' BOUNDARY: WEB DASHBOARD
+' ============================================================
+package "Web Dashboard\n(Manajemen & Monitoring)" as WebPkg {
+  usecase "Login via NISN" as UC_LoginNISN
+  usecase "Lihat Status Hari Ini" as UC_LihatStatus
+  usecase "Lihat Riwayat Presensi" as UC_Riwayat
+  usecase "Login Instansi\n(Username & Password)" as UC_LoginInstansi
+  usecase "Lihat Dashboard" as UC_Dashboard
+  usecase "Lihat Rekap Absensi" as UC_Rekap
+  usecase "Ubah Status Manual\n(Hadir / Izin / Sakit / Alpa)" as UC_Ubah
+  usecase "Inisialisasi Absensi Harian" as UC_Inisialisasi
+  usecase "CRUD Siswa" as UC_CRUDSiswa
+  usecase "CRUD Guru" as UC_CRUDGuru
+  usecase "Kelola Kelas & Jurusan" as UC_KelolaKelas
+  usecase "Export Excel" as UC_Export
+}
+
+' ============================================================
+' RELASI: SISWA (ANDROID)
+' ============================================================
+Siswa --> UC_Regis
+UC_Regis .> UC_Capture : <<include>>
+UC_Capture .> UC_Deteksi : <<include>>
+
+Siswa --> UC_Scan
+UC_Scan .> UC_Verif : <<include>>
+UC_Verif .> UC_Catat : <<extend>>
+
+Siswa --> Sistem : menggunakan
+
+' ============================================================
+' RELASI: ORANG TUA (WEB)
+' ============================================================
+OrangTua --> UC_LoginNISN
+OrangTua --> UC_LihatStatus
+OrangTua --> UC_Riwayat
+
+' ============================================================
+' RELASI: GURU (WEB)
+' ============================================================
+Guru --> UC_LoginInstansi
+Guru --> UC_Dashboard
+Guru --> UC_Rekap
+Guru --> UC_Ubah
+Guru --> UC_Inisialisasi
+
+' ============================================================
+' RELASI: TU (WEB)
+' ============================================================
+TU --> UC_LoginInstansi
+TU --> UC_Dashboard
+TU --> UC_Rekap
+TU --> UC_Ubah
+TU --> UC_Inisialisasi
+TU --> UC_CRUDSiswa
+TU --> UC_CRUDGuru
+TU --> UC_KelolaKelas
+TU --> UC_Export
+
+' ============================================================
+' RELASI: SISTEM (BACKEND)
+' ============================================================
+UC_Deteksi ..> Sistem : <<system>>
+UC_Verif  ..> Sistem : <<system>>
+UC_Catat  ..> Sistem : <<system>>
+
+note right of UC_Verif
+  Cosine Similarity >= 0.60
+  Cocokkan dengan embedding
+  di database kelas
+end note
+
+note right of UC_Regis
+  Upload 3 image JPEG
+  224x224 px ke API
+  POST /register/
+end note
+
+note right of UC_Scan
+  Capture 1 frame
+  crop face 224x224
+  POST /attendance/
+end note
+
+' ============================================================
+' RELASI: GENERALISASI AKTOR
+' ============================================================
+Guru -up-|> TU : extends\n(terbatas)
+note on link #FFE8ED
+  TU punya semua akses Guru
+  + CRUD & Export
+end note
+
+@enduml

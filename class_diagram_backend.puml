@@ -1,0 +1,179 @@
+@startuml
+!theme plain
+
+title EduTech - Class Diagram (Backend Models)
+
+' ====== STYLING ======
+skinparam class {
+  BackgroundColor #f5f5f5
+  BorderColor #333333
+  HeaderBackgroundColor #d4d9e6
+  FontSize 12
+  AttributeFontSize 11
+}
+
+' ====== ENTITIES ======
+
+class Jurusan {
+  - id_jurusan: int (PK)
+  - nama_jurusan: str(100)
+  --
+  + get_kelas_list(): list[Kelas]
+}
+
+class Kelas {
+  - id_kelas: int (PK)
+  - nama_kelas: str(50)
+  - id_jurusan: int (FK)
+  --
+  + get_jurusan(): Jurusan
+  + get_siswa_list(): list[Student]
+  + get_guru_kelas_list(): list[GuruKelas]
+}
+
+class Student {
+  - id_siswa: int (PK)
+  - nisn: str(20) [unique]
+  - nama_siswa: str(100)
+  - id_kelas: int (FK)
+  - jenis_kelamin: Enum('L','P')
+  - tempat_lahir: str(50)
+  - tanggal_lahir: Date
+  - agama: str(20)
+  - alamat: Text
+  - no_telp: str(20)
+  - tahun_masuk: int
+  - created_at: DateTime
+  - embedding: Text
+  --
+  + get_kelas_rel(): Kelas
+  + get_face_data_list(): list[FaceData]
+  + get_absensi_list(): list[Attendance]
+}
+
+class FaceData {
+  - id_face: int (PK)
+  - id_siswa: int (FK)
+  - image_path: Text
+  - embedding: Text
+  - pose: str(20)
+  - created_at: DateTime
+  --
+  + get_siswa_rel(): Student
+}
+
+class Attendance {
+  - id_absensi: int (PK)
+  - id_siswa: int (FK)
+  - id_jadwal: int (FK) [null]
+  - check_time: DateTime
+  - status: str(50)
+  - similarity: Float
+  - image_path: Text
+  - status_manual: str(20) [null]
+  - keterangan: Text [null]
+  - updated_by: int (FK) [null]
+  - updated_at: DateTime [null]
+  --
+  + get_siswa_rel(): Student
+  + get_jadwal_rel(): Jadwal
+  + get_updated_by_rel(): User
+}
+
+class User {
+  - id_user: int (PK)
+  - username: str(50) [unique]
+  - password: str(255)
+  - role: Enum('guru','tu')
+  - nama: str(100)
+  - is_active: Boolean
+  - created_at: DateTime
+  --
+  + get_guru(): Guru
+  + get_guru_kelas_list(): list[GuruKelas]
+}
+
+class Guru {
+  - id_guru: int (PK)
+  - id_user: int (FK) [unique]
+  - nip: str(30) [unique]
+  - jenis_kelamin: Enum('L','P')
+  - tempat_lahir: str(50)
+  - tanggal_lahir: Date
+  - agama: str(20)
+  - alamat: Text
+  - no_telp: str(20)
+  --
+  + get_user_rel(): User
+}
+
+class GuruKelas {
+  - id: int (PK)
+  - id_user: int (FK)
+  - id_kelas: int (FK)
+  --
+  + get_user_rel(): User
+  + get_kelas_rel(): Kelas
+}
+
+class MataPelajaran {
+  - id_mapel: int (PK)
+  - nama_mapel: str(100)
+  --
+  + get_jadwal_list(): list[Jadwal]
+}
+
+class Jadwal {
+  - id_jadwal: int (PK)
+  - id_mapel: int (FK)
+  - id_user: int (FK)
+  - id_kelas: int (FK)
+  - hari: Enum(Senin..Jumat)
+  - jam_mulai: Time
+  - jam_selesai: Time
+  --
+  + get_mapel_rel(): MataPelajaran
+  + get_user_rel(): User
+  + get_kelas_rel(): Kelas
+  + get_absensi_list(): list[Attendance]
+}
+
+' ====== RELATIONSHIPS ======
+
+Jurusan "1" -- "*" Kelas : memiliki
+Kelas "*" -- "1" Jurusan : dimiliki oleh
+
+Kelas "1" -- "*" Student : mempunyai
+Student "*" -- "1" Kelas : terdaftar di
+
+Student "1" -- "*" FaceData : mempunyai
+FaceData "*" -- "1" Student : milik
+
+Student "1" -- "*" Attendance : tercatat
+Attendance "*" -- "1" Student : milik
+
+User "1" -- "1" Guru : profil
+Guru "1" -- "1" User : user
+
+User "1" -- "*" GuruKelas : mengajar
+GuruKelas "*" -- "1" User : guru
+
+GuruKelas "*" -- "1" Kelas : kelas
+Kelas "1" -- "*" GuruKelas : diajar oleh
+
+User "1" -- "*" Jadwal : mengajar
+Jadwal "*" -- "1" User : guru
+
+MataPelajaran "1" -- "*" Jadwal : dijadwalkan
+Jadwal "*" -- "1" MataPelajaran : mapel
+
+Kelas "1" -- "*" Jadwal : mempunyai
+Jadwal "*" -- "1" Kelas : kelas
+
+Jadwal "1" -- "*" Attendance : direkam
+Attendance "*" -- "1" Jadwal : jadwal
+
+User "1" -- "*" Attendance : mengupdate
+Attendance "*" -- "1" User : diupdate oleh
+
+@enduml

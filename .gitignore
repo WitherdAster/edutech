@@ -1,0 +1,10 @@
+# Virtual environment (root level)
+.venv/
+.sixth/
+
+# Env files
+.env
+
+# OS files
+.DS_Store
+Thumbs.db

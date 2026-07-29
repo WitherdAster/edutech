@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -7,9 +8,9 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal
 from app.models import User, Student
 
-SECRET_KEY = "edutech-secret-key-change-in-production"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_HOURS = 24
+SECRET_KEY = os.getenv("JWT_SECRET", "edutech-secret-key-change-in-production")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("JWT_EXPIRE_HOURS", "24"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()

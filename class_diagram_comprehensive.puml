@@ -1,0 +1,654 @@
+@startuml EduTech - Comprehensive Class Diagram
+!theme plain
+skinparam backgroundColor #FEFEFE
+
+skinparam package {
+  BackgroundColor #F0F4FF
+  BorderColor #4A6CF7
+  FontColor #1A1A2E
+  FontStyle bold
+}
+skinparam class {
+  BorderColor #4A6CF7
+  BackgroundColor #E8EDFF
+  FontColor #1A1A2E
+}
+skinparam interface {
+  BorderColor #0EA5E9
+  BackgroundColor #E0F7FA
+  FontColor #0EA5E9
+  FontStyle bold
+}
+skinparam arrow {
+  Color #6B7280
+}
+skinparam note {
+  BackgroundColor #FFF8DC
+  BorderColor #D4A017
+}
+skinparam linetype ortho
+
+' ============================================================
+' PACKAGE: DATABASE MODELS (SQLAlchemy ORM)
+' ============================================================
+package "Model Database\n(SQLAlchemy / MySQL)" as ModelPkg {
+
+  class Jurusan {
+    - id_jurusan: int (PK)
+    - nama_jurusan: str(100)
+    --
+    + get_kelas_list(): list[Kelas]
+  }
+
+  class Kelas {
+    - id_kelas: int (PK)
+    - nama_kelas: str(50)
+    - id_jurusan: int (FK)
+    --
+    + get_jurusan(): Jurusan
+    + get_siswa_list(): list[Student]
+    + get_guru_kelas_list(): list[GuruKelas]
+  }
+
+  class Student {
+    - id_siswa: int (PK)
+    - nisn: str(20) [unique]
+    - nama_siswa: str(100)
+    - id_kelas: int (FK)
+    - jenis_kelamin: Enum(L, P)
+    - tempat_lahir: str(50)
+    - tanggal_lahir: Date
+    - agama: str(20)
+    - alamat: Text
+    - no_telp: str(20)
+    - tahun_masuk: int
+    - created_at: DateTime
+    - embedding: Text (JSON)
+    --
+    + get_kelas_rel(): Kelas
+    + get_face_data_list(): list[FaceData]
+    + get_absensi_list(): list[Attendance]
+  }
+
+  class FaceData {
+    - id_face: int (PK)
+    - id_siswa: int (FK)
+    - image_path: Text
+    - embedding: Text (JSON)
+    - pose: str(20)
+    - created_at: DateTime
+    --
+    + get_siswa_rel(): Student
+  }
+
+  class Attendance {
+    - id_absensi: int (PK)
+    - id_siswa: int (FK)
+    - id_jadwal: int (FK) [nullable]
+    - check_time: DateTime
+    - status: str(50)
+    - similarity: Float
+    - image_path: Text
+    - status_manual: str(20) [nullable]
+    - keterangan: Text [nullable]
+    - updated_by: int (FK) [nullable]
+    - updated_at: DateTime [nullable]
+    --
+    + get_siswa_rel(): Student
+    + get_jadwal_rel(): Jadwal
+    + get_updated_by_rel(): User
+  }
+
+  class User {
+    - id_user: int (PK)
+    - username: str(50) [unique]
+    - password: str(255) [bcrypt]
+    - role: Enum(guru, tu)
+    - nama: str(100)
+    - is_active: Boolean
+    - created_at: DateTime
+    --
+    + __repr__(): str
+    + get_guru(): Guru
+    + get_guru_kelas_list(): list[GuruKelas]
+  }
+
+  class Guru {
+    - id_guru: int (PK)
+    - id_user: int (FK) [unique]
+    - nip: str(30) [unique]
+    - jenis_kelamin: Enum(L, P)
+    - tempat_lahir: str(50)
+    - tanggal_lahir: Date
+    - agama: str(20)
+    - alamat: Text
+    - no_telp: str(20)
+    --
+    + get_user_rel(): User
+  }
+
+  class GuruKelas {
+    - id: int (PK)
+    - id_user: int (FK)
+    - id_kelas: int (FK)
+    --
+    + get_user_rel(): User
+    + get_kelas_rel(): Kelas
+  }
+
+  class MataPelajaran {
+    - id_mapel: int (PK)
+    - nama_mapel: str(100)
+    --
+    + get_jadwal_list(): list[Jadwal]
+  }
+
+  class Jadwal {
+    - id_jadwal: int (PK)
+    - id_mapel: int (FK)
+    - id_user: int (FK)
+    - id_kelas: int (FK)
+    - hari: Enum(Senin..Jumat)
+    - jam_mulai: Time
+    - jam_selesai: Time
+    --
+    + get_mapel_rel(): MataPelajaran
+    + get_user_rel(): User
+    + get_kelas_rel(): Kelas
+    + get_absensi_list(): list[Attendance]
+  }
+
+}
+
+' ============================================================
+' PACKAGE: BACKEND SERVICES & AUTH
+' ============================================================
+package "Services & Auth\n(Python / FastAPI)" as ServicePkg {
+
+  class Database {
+    {static} - DATABASE_URL: str = "mysql+pymysql://root:@localhost/edutech"
+    {static} - engine: Engine
+    {static} - SessionLocal: sessionmaker
+    {static} - Base: declarative_base
+  }
+
+  class AuthService {
+    {static} - SECRET_KEY: str
+    {static} - ALGORITHM: str = "HS256"
+    {static} - ACCESS_TOKEN_EXPIRE_HOURS: int = 24
+    {static} - pwd_context: CryptContext
+    {static} - security: HTTPBearer
+    --
+    {static} + hash_password(password): str
+    {static} + verify_password(plain, hashed): bool
+    {static} + create_access_token(data): str
+    {static} + get_db(): Generator[Session]
+    {static} + get_current_user(credentials, db): User
+    {static} + get_current_student(credentials, db): Student
+  }
+
+  class FaceService {
+    {static} + get_embedding(image_path, detector_backend): list[float] | None
+  }
+
+  class RecognitionService {
+    {static} - THRESHOLD: float = 0.60
+    --
+    {static} - cosine_similarity(a, b): float
+    {static} + recognize_face(db, embedding, pose, id_kelas): tuple[int|None, float]
+  }
+
+  class AugmentationService {
+    {static} - UPLOAD_DIR: str = "uploads"
+    --
+    {static} + augment_image(image_path): list[str]
+  }
+
+}
+
+' ============================================================
+' PACKAGE: REQUEST / RESPONSE DTOs (Pydantic)
+' ============================================================
+package "Request/Response DTOs\n(Pydantic)" as DTOPkg {
+
+  class LoginRequest {
+    + username: str
+    + password: str
+  }
+
+  class SiswaLoginRequest {
+    + nisn: str
+    + nama_siswa: str
+  }
+
+  class AbsensiUpdate {
+    + status_manual: str
+    + keterangan: str | None = None
+  }
+
+  class CreateGuruRequest {
+    + username: str
+    + password: str
+    + nama: str
+    + nip: str | None
+    + jenis_kelamin: str | None
+    + tempat_lahir: str | None
+    + tanggal_lahir: str | None
+    + agama: str | None
+    + alamat: str | None
+    + no_telp: str | None
+  }
+
+  class UpdateGuruRequest {
+    + nama: str | None
+    + nip: str | None
+    + jenis_kelamin: str | None
+    + tempat_lahir: str | None
+    + tanggal_lahir: str | None
+    + agama: str | None
+    + alamat: str | None
+    + no_telp: str | None
+  }
+
+  class CreateSiswaRequest {
+    + nisn: str
+    + nama_siswa: str
+    + id_kelas: int
+    + jenis_kelamin: str | None
+    + tempat_lahir: str | None
+    + tanggal_lahir: str | None
+    + agama: str | None
+    + alamat: str | None
+    + no_telp: str | None
+    + tahun_masuk: int | None
+  }
+
+  class UpdateSiswaRequest {
+    + nisn: str | None
+    + nama_siswa: str | None
+    + id_kelas: int | None
+    + jenis_kelamin: str | None
+    + tempat_lahir: str | None
+    + tanggal_lahir: str | None
+    + agama: str | None
+    + alamat: str | None
+    + no_telp: str | None
+    + tahun_masuk: int | None
+  }
+
+  class CreateMapelRequest {
+    + nama_mapel: str
+  }
+
+  class CreateJurusanRequest {
+    + nama_jurusan: str
+  }
+
+  class CreateKelasRequest {
+    + nama_kelas: str
+    + id_jurusan: int
+  }
+
+  class CreateJadwalRequest {
+    + id_mapel: int
+    + id_user: int
+    + id_kelas: int
+    + hari: str
+    + jam_mulai: str
+    + jam_selesai: str
+  }
+
+  class UpdateJadwalRequest {
+    + id_mapel: int | None
+    + id_user: int | None
+    + jam_mulai: str | None
+    + jam_selesai: str | None
+  }
+
+  class AssignKelasRequest {
+    + id_kelas: int
+  }
+
+}
+
+' ============================================================
+' PACKAGE: BACKEND ROUTES (FastAPI)
+' ============================================================
+package "API Routes\n(Python FastAPI)" as RoutePkg {
+
+  class RouteAttendance {
+    + POST /attendance/(id_kelas, pose, file): dict
+  }
+
+  class RouteRegister {
+    + POST /register/(id_siswa, files[3]): dict
+  }
+
+  class RouteSiswa {
+    + POST /api/auth/siswa(req): dict
+    + GET /api/siswa/me(): dict
+    + GET /api/siswa/absensi(): list
+    + GET /api/siswa/absensi/history(page, per_page): dict
+  }
+
+  class RouteAuth {
+    + POST /api/auth/login(req): dict
+    + GET /api/me(): dict
+  }
+
+  class RouteDashboard {
+    + GET /api/dashboard(): dict
+  }
+
+  class RouteAbsensi {
+    + GET /api/absensi(tanggal, id_kelas, id_siswa, id_jadwal): list
+    + POST /api/absensi(id_siswa, id_jadwal, body): dict
+    + PUT /api/absensi/{id}(body): dict
+    + GET /api/absensi/hari-ini(tanggal, id_kelas): list
+    + GET /api/absensi/export(tanggal, id_kelas, id_mapel): StreamingResponse
+  }
+
+  class RouteSiswaCRUD {
+    + GET /api/siswa(id_kelas, search): list
+    + GET /api/siswa/{id}(): dict
+    + POST /api/admin/siswa(body): dict
+    + PUT /api/admin/siswa/{id}(body): dict
+    + DELETE /api/admin/siswa/{id}(): dict
+  }
+
+  class RouteGuru {
+    + GET /api/guru(id_kelas): list
+    + GET /api/guru/{id}(): dict
+    + POST /api/admin/guru(body): dict
+    + PUT /api/admin/guru/{id}(body): dict
+    + DELETE /api/admin/guru/{id}(): dict
+    + GET /api/admin/guru/{id}/kelas(): list
+    + POST /api/admin/guru/{id}/kelas(body): dict
+    + DELETE /api/admin/guru/{id}/kelas/{id_kelas}(): dict
+  }
+
+  class RouteMasterData {
+    + GET /api/jurusan(): list
+    + POST /api/admin/jurusan(body): dict
+    + PUT /api/admin/jurusan/{id}(body): dict
+    + DELETE /api/admin/jurusan/{id}(): dict
+    + GET /api/kelas(): list
+    + POST /api/admin/kelas(body): dict
+    + PUT /api/admin/kelas/{id}(body): dict
+    + DELETE /api/admin/kelas/{id}(): dict
+    + GET /api/mapel(): list
+    + POST /api/admin/mapel(body): dict
+    + PUT /api/admin/mapel/{id}(body): dict
+    + DELETE /api/admin/mapel/{id}(): dict
+    + GET /api/jadwal(hari, id_kelas, ...): list
+    + POST /api/admin/jadwal(body): dict
+    + PUT /api/admin/jadwal/{id}(body): dict
+    + DELETE /api/admin/jadwal/{id}(): dict
+  }
+
+  class RoutePublic {
+    + GET /api/public/kelas(): list
+    + GET /api/public/siswa/{id_kelas}(): list
+  }
+
+  class RouteWeb {
+    + GET /(): dict
+  }
+
+}
+
+' ============================================================
+' PACKAGE: FRONTEND (React / Vite)
+' ============================================================
+package "Frontend Web\n(React 19 / Vite 8)" as FrontPkg {
+
+  class ApiClient {
+    {static} - API_URL: str
+    {static} - instance: AxiosInstance
+    --
+    + interceptor_request(config): config
+    + interceptor_response(res, err): res | err
+  }
+
+  class AuthContext {
+    - user: dict | null
+    - siswa: dict | null
+    - loading: bool
+    --
+    + login(username, password): dict
+    + logout(): void
+    + loginSiswa(nisn, nama_siswa): dict
+    + logoutSiswa(): void
+    + useAuth(): AuthContext
+  }
+
+  class App {
+    + render(): Routes
+  }
+
+  class AppLayout {
+    - isMobile: bool
+    - sidebarOpen: bool
+    - menuItems: list
+    --
+    + onMenuClick(key): void
+    + render(): Layout
+  }
+
+  class ProtectedRoute {
+    - user: dict | null
+    - loading: bool
+    --
+    + render(): Navigate | Spin | children
+  }
+
+  class LoginSelect {
+    + render(): RoleSelection
+  }
+
+  class Login {
+    - loading: bool
+    --
+    + onFinish(username, password): void
+    + render(): Form
+  }
+
+  class SiswaLogin {
+    - loading: bool
+    --
+    + onFinish(nisn, nama_siswa): void
+    + render(): Form
+  }
+
+  class DashboardPage {
+    - data: dict | null
+    - jadwalList: list
+    - error: str | null
+    --
+    + fetchDashboard(): void
+    + fetchJadwal(): void
+    + render(): Cards
+  }
+
+  class AbsensiPage {
+    - kelas: list
+    - jadwalList: list
+    - idKelas: int | null
+    - idJadwal: int | null
+    - tanggal: dayjs
+    - siswaData: list
+    - loading: bool
+    - editModal: dict | null
+    --
+    + fetchData(): void
+    + openEditModal(record): void
+    + handleEdit(values): void
+    + render(): Table
+  }
+
+  class SiswaPage {
+    - siswaList: list
+    - kelas: list
+    - loading: bool
+    - modalOpen: bool
+    - editingSiswa: dict | null
+    --
+    + fetchSiswa(): void
+    + openCreateModal(): void
+    + openEditModal(record): void
+    + handleSave(values): void
+    + handleDelete(id): void
+    + render(): Table
+  }
+
+  class GuruPage {
+    - guruList: list
+    - kelas: list
+    - loading: bool
+    - modalOpen: bool
+    - editingGuru: dict | null
+    - kelasModal: dict | null
+    --
+    + fetchGuru(): void
+    + handleSave(values): void
+    + handleDelete(id): void
+    + openKelasModal(record): void
+    + handleAssignKelas(id_kelas): void
+    + handleRemoveKelas(id_kelas): void
+    + render(): Table
+  }
+
+  class JadwalGuruPage {
+    - jadwalList: list
+    - selectedHari: str
+    --
+    + fetchJadwal(hari): void
+    + render(): Table
+  }
+
+  class JadwalAdminPage {
+    - jadwalList: list
+    - mapelList: list
+    - guruList: list
+    - kelasList: list
+    - loading: bool
+    - modalOpen: bool
+    --
+    + fetchData(): void
+    + handleCreate(values): void
+    + handleDelete(id): void
+    + render(): Table
+  }
+
+  class ExportPage {
+    - kelas: list
+    - mapel: list
+    - loading: bool
+    --
+    + handleExport(values): void
+    + render(): Form
+  }
+
+  class MasterDataPage {
+    - dataList: list
+    - loading: bool
+    - modalOpen: bool
+    - editingItem: dict | null
+    --
+    + fetchData(): void
+    + handleSave(values): void
+    + handleDelete(id): void
+    + render(): Table
+  }
+
+  class SiswaDashboardPage {
+    - todayAbsensi: list
+    - historyData: list
+    - loading: bool
+    - page: int
+    - total: int
+    --
+    + fetchToday(): void
+    + fetchHistory(page): void
+    + render(): Cards
+  }
+
+}
+
+' ============================================================
+' RELATIONS: DATABASE MODELS
+' ============================================================
+Jurusan "1" -- "0..*" Kelas : memiliki
+Kelas   "1" -- "0..*" Student : memiliki
+Student "1" -- "0..*" FaceData : memiliki
+Student "1" -- "0..*" Attendance : memiliki
+User    "1" -- "0..1" Guru : memiliki profil
+User    "1" -- "0..*" GuruKelas : mengajar
+Kelas   "1" -- "0..*" GuruKelas : diampu
+Kelas   "1" -- "0..*" Jadwal : mempunyai
+User    "1" -- "0..*" Jadwal : mengajar
+MataPelajaran "1" -- "0..*" Jadwal : dijadwalkan
+Jadwal  "1" -- "0..*" Attendance : direkam
+User    "1" -- "0..*" Attendance : mengupdate
+
+' ============================================================
+' RELATIONS: ROUTES -> SERVICES -> MODELS
+' ============================================================
+RouteAttendance .> FaceService : using
+RouteAttendance .> RecognitionService : using
+RouteRegister .> FaceService : using
+RecognitionService .> FaceData : query
+RecognitionService .> Student : query
+RecognitionService .> FaceService : using
+
+RouteSiswaCRUD .> Student : CRUD
+RouteGuru .> User : CRUD
+RouteGuru .> Guru : CRUD
+RouteGuru .> GuruKelas : assign/remove
+RouteAbsensi .> Attendance : CRUD
+RouteAbsensi .> Student : query
+RouteAbsensi .> Jadwal : query
+RouteDashboard .> Student : count
+RouteDashboard .> Attendance : count
+RouteDashboard .> Jadwal : query
+RouteSiswa .> Attendance : query
+RouteSiswa .> Jadwal : query
+RouteMasterData .> Jurusan : CRUD
+RouteMasterData .> Kelas : CRUD
+RouteMasterData .> MataPelajaran : CRUD
+RouteMasterData .> Jadwal : CRUD
+RoutePublic .> Kelas : query
+RoutePublic .> Student : query
+
+' ============================================================
+' RELATIONS: FRONTEND -> BACKEND API
+' ============================================================
+note "Jaringan\nHTTP (Axios)" as NetworkNote
+ApiClient . NetworkNote
+NetworkNote . RouteAuth
+NetworkNote . RouteDashboard
+NetworkNote . RouteAbsensi
+NetworkNote . RouteSiswaCRUD
+NetworkNote . RouteGuru
+NetworkNote . RouteMasterData
+NetworkNote . RouteSiswa
+NetworkNote . RoutePublic
+
+AuthContext .> ApiClient : using
+App .> AuthContext : wraps
+App .> ProtectedRoute : wraps
+ProtectedRoute .> AuthContext : reads
+AppLayout .> AuthContext : reads
+Login .> AuthContext : calls login()
+SiswaLogin .> AuthContext : calls loginSiswa()
+AbsensiPage .> ApiClient : HTTP
+DashboardPage .> ApiClient : HTTP
+SiswaPage .> ApiClient : HTTP
+GuruPage .> ApiClient : HTTP
+JadwalGuruPage .> ApiClient : HTTP
+JadwalAdminPage .> ApiClient : HTTP
+ExportPage .> ApiClient : HTTP
+MasterDataPage .> ApiClient : HTTP
+SiswaDashboardPage .> ApiClient : HTTP
+
+@enduml

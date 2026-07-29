@@ -19,7 +19,6 @@ def cosine_similarity(a, b):
     similarity = dot / (
         norm_a * norm_b
     )
-
     return float(similarity)
 
 
