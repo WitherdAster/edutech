@@ -10,9 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip uninstall -y opencv-python && \
-    pip install opencv-python-headless
+    pip install -r requirements.txt
 
 COPY . .
 
