@@ -70,7 +70,7 @@ async def register_student(
 
             print(f"FILE => {filepath}")
 
-            embedding = get_embedding(filepath, detector_backend="opencv")
+            embedding = get_embedding(filepath, detector_backend="retinaface")
 
             if embedding is None:
                 print("EMBEDDING GAGAL")
