@@ -2,7 +2,7 @@ fastapi
 uvicorn
 deepface
 tf-keras
-opencv-python
+opencv-python-headless
 numpy
 sqlalchemy
 pymysql
