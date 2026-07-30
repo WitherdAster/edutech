@@ -1,6 +1,5 @@
 {
   "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "npm install --include=optional && npm run build"
+    "builder": "DOCKERFILE"
   }
 }
