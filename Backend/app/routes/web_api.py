@@ -128,6 +128,18 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/utils/fix-passwords")
+def fix_passwords(db: Session = Depends(get_db)):
+    count = 0
+    for u in db.query(User).all():
+        if not u.password.startswith("$2"):
+            u.password = hash_password(u.password)
+            count += 1
+            print(f"Fixed: {u.username}")
+    db.commit()
+    return {"fixed": count}
+
+
 @router.get("/me")
 def get_me(user: User = Depends(get_current_user)):
     return {
