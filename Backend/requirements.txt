@@ -2,6 +2,7 @@ fastapi
 uvicorn
 deepface
 tf-keras
+opencv-python==4.13.0.92
 numpy
 sqlalchemy
 pymysql
