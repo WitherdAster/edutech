@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Card, Button, Space, Modal, Form, Input, Select, DatePicker,
-  message, Popconfirm, Typography, Tag, Transfer,
+  message, Popconfirm, Typography, Tag, Transfer, Grid,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, BookOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -11,6 +11,8 @@ import ResponsiveTable from '../components/ResponsiveTable';
 
 export default function Guru() {
   const { user } = useAuth();
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -284,7 +286,9 @@ export default function Guru() {
         open={!!kelasModal}
         onCancel={() => setKelasModal(null)}
         footer={null}
-        width={520}
+        width={isMobile ? '94vw' : 520}
+        style={isMobile ? { top: 16 } : undefined}
+        styles={isMobile ? { body: { maxHeight: '68vh', overflow: 'auto' } } : undefined}
       >
         {kelasLoading ? (
           <div style={{ textAlign: 'center', padding: 40 }}>
@@ -300,7 +304,8 @@ export default function Guru() {
             onChange={handleKelasChange}
             render={(item) => item.title}
             titles={['Semua Kelas', 'Kelas Ajar']}
-            listStyle={{ width: 220, height: 320 }}
+            listStyle={isMobile ? { width: '40%', height: 280 } : { width: 220, height: 320 }}
+            styles={isMobile ? { actions: { margin: '0 2px' } } : undefined}
             showSearch
             filterOption={(inputValue, item) => item.title.toLowerCase().includes(inputValue.toLowerCase())}
             oneWay

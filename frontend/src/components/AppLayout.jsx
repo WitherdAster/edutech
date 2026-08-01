@@ -74,28 +74,9 @@ export default function AppLayout() {
           </div>
         )}
 
-        <Content style={{ padding: 16, paddingBottom: 80 }}>
+        <Content style={{ padding: 16 }}>
           <Outlet />
         </Content>
-
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
-          background: '#fff', borderTop: '1px solid #f0f0f0',
-          display: 'flex', justifyContent: 'space-around', padding: '6px 0',
-        }}>
-          {menuItems.map((item) => (
-            <Button key={item.key} type="text" size="small"
-              onClick={() => navigate(item.key)}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                height: 'auto', lineHeight: 1.2, padding: '4px 8px',
-                color: location.pathname === item.key ? '#1677ff' : '#999',
-              }}>
-              <span style={{ fontSize: 20 }}>{item.icon}</span>
-              <span style={{ fontSize: 10 }}>{item.label}</span>
-            </Button>
-          ))}
-        </div>
       </Layout>
     );
   }
