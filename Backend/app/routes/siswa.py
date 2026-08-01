@@ -76,7 +76,7 @@ def siswa_absensi(
     today = date.today()
     today_start = datetime(today.year, today.month, today.day)
     today_end = datetime(today.year, today.month, today.day + 1)
-    hari_ini = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][today.weekday()]
+    hari_ini = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][today.weekday()] if today.weekday() < 5 else None
 
     base = db.query(Attendance).filter(
         Attendance.id_siswa == siswa.id_siswa,

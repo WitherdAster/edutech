@@ -1204,7 +1204,7 @@ def absensi_hari_ini(
         today = date.today()
     today_start = datetime(today.year, today.month, today.day)
     today_end = datetime(today.year, today.month, today.day + 1)
-    hari_ini = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][today.weekday()]
+    hari_ini = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][today.weekday()] if today.weekday() < 5 else None
 
     jadwal_query = (
         db.query(Jadwal)
@@ -1324,7 +1324,7 @@ def dashboard(
     today = date.today()
     today_start = datetime(today.year, today.month, today.day)
     today_end = datetime(today.year, today.month, today.day + 1)
-    hari_ini = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][today.weekday()]
+    hari_ini = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"][today.weekday()] if today.weekday() < 5 else None
 
     if user.role == "guru":
         guru_kelas_ids = [
