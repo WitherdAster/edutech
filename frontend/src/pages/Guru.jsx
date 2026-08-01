@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Table, Card, Button, Space, Modal, Form, Input, Select, DatePicker,
+  Card, Button, Space, Modal, Form, Input, Select, DatePicker,
   message, Popconfirm, Typography, Tag, Transfer,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, BookOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 export default function Guru() {
   const { user } = useAuth();
@@ -186,12 +187,37 @@ export default function Guru() {
           </Space>
         }
       >
-        <Table
+        <ResponsiveTable
           dataSource={data}
           columns={columns}
           rowKey="id_guru"
           loading={loading}
           pagination={{ pageSize: 20 }}
+          mobileTitle={(r) => r.nama}
+          mobileSubtitle={(r) => r.username || '-'}
+          excludeFromDetail={['aksi']}
+          mobileActions={[
+            {
+              key: 'kelas',
+              label: 'Kelas',
+              icon: <BookOutlined />,
+              onClick: openKelasModal,
+            },
+            {
+              key: 'edit',
+              label: 'Edit',
+              icon: <EditOutlined />,
+              onClick: openEdit,
+            },
+            {
+              key: 'nonaktif',
+              label: 'Nonaktifkan',
+              icon: <DeleteOutlined />,
+              danger: true,
+              confirmText: 'Nonaktifkan guru ini?',
+              onClick: (record) => handleDelete(record.id_guru),
+            },
+          ]}
         />
       </Card>
 

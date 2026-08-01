@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Card, Table, Tag, Typography, Space, Button, Spin, Descriptions, message, Tabs,
+  Card, Tag, Typography, Space, Button, Spin,
 } from 'antd';
 import {
   LogoutOutlined, CheckCircleOutlined, CloseCircleOutlined,
-  FieldTimeOutlined, ReloadOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 const statusColors = {
   Hadir: 'green',
@@ -142,12 +143,16 @@ export default function SiswaDashboard() {
         {absensi.length === 0 ? (
           <Typography.Text type="secondary">Belum ada data absensi hari ini</Typography.Text>
         ) : (
-          <Table
+          <ResponsiveTable
             dataSource={absensi}
             columns={todayColumns}
-            rowKey="id_absensi"
+            rowKey="id_jadwal"
             pagination={false}
-            size="small"
+            mobileTitle={(r) => r.mata_pelajaran}
+            mobileSubtitle={(r) => [
+              r.nama_guru,
+              r.jam_mulai && r.jam_selesai ? `${r.jam_mulai} - ${r.jam_selesai}` : null,
+            ].filter(Boolean).join(' · ')}
           />
         )}
       </Card>
@@ -156,7 +161,7 @@ export default function SiswaDashboard() {
         title="Riwayat Absensi"
         style={{ marginBottom: 16, borderRadius: 12 }}
       >
-        <Table
+        <ResponsiveTable
           dataSource={history.data}
           columns={historyColumns}
           rowKey="id_absensi"
@@ -167,7 +172,8 @@ export default function SiswaDashboard() {
             onChange: loadHistory,
             size: 'small',
           }}
-          size="small"
+          mobileTitle={(r) => (r.check_time ? dayjs(r.check_time).format('DD MMM YYYY, HH:mm') : '-')}
+          mobileSubtitle={(r) => r.status}
         />
       </Card>
 

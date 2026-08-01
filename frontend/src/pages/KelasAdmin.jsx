@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Table, Card, Button, Space, Modal, Form, Input, Select,
+  Card, Button, Space, Modal, Form, Input, Select,
   message, Popconfirm, Typography,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 export default function KelasAdmin() {
   const { user } = useAuth();
@@ -124,12 +125,31 @@ export default function KelasAdmin() {
           </Space>
         }
       >
-        <Table
+        <ResponsiveTable
           dataSource={data}
           columns={columns}
           rowKey="id_kelas"
           loading={loading}
           pagination={{ pageSize: 20 }}
+          mobileTitle={(r) => r.nama_kelas}
+          mobileSubtitle={(r) => r.jurusan || '-'}
+          excludeFromDetail={['aksi']}
+          mobileActions={[
+            {
+              key: 'edit',
+              label: 'Edit',
+              icon: <EditOutlined />,
+              onClick: openEdit,
+            },
+            {
+              key: 'delete',
+              label: 'Hapus',
+              icon: <DeleteOutlined />,
+              danger: true,
+              confirmText: 'Hapus kelas ini?',
+              onClick: (record) => handleDelete(record.id_kelas),
+            },
+          ]}
         />
       </Card>
 

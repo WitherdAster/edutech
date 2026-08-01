@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Table, Select, Card, Tag, Button, Space, Modal,
+  Select, Card, Tag, Button, Space, Modal,
   Radio, Input as AntInput, message, Typography, DatePicker,
 } from 'antd';
 import { EditOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../api';
-import { useAuth } from '../context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 const statusColors = {
   Hadir: 'green',
@@ -18,7 +18,6 @@ const statusColors = {
 };
 
 export default function Absensi() {
-  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [kelas, setKelas] = useState([]);
   const [jadwalList, setJadwalList] = useState([]);
@@ -100,6 +99,14 @@ export default function Absensi() {
     }
   };
 
+  const openEdit = (record) => {
+    setEditModal({
+      ...record,
+      newStatus: record.sumber === 'Base' ? 'Hadir' : (record.status !== 'Belum Absen' ? record.status : 'Hadir'),
+      keterangan: '',
+    });
+  };
+
   const columns = [
     { title: 'No', key: 'index', width: 50, render: (_, __, i) => i + 1 },
     { title: 'NISN', dataIndex: 'nisn', key: 'nisn', width: 120 },
@@ -124,11 +131,7 @@ export default function Absensi() {
       render: (_, record) => (
         <Button
           type="link" size="small" icon={<EditOutlined />}
-          onClick={() => setEditModal({
-            ...record,
-            newStatus: record.sumber === 'Base' ? 'Hadir' : (record.status !== 'Belum Absen' ? record.status : 'Hadir'),
-            keterangan: '',
-          })}
+          onClick={() => openEdit(record)}
         >
           Ubah
         </Button>
@@ -193,12 +196,23 @@ export default function Absensi() {
           </div>
         )}
 
-        <Table
+        <ResponsiveTable
           dataSource={siswaData}
           columns={columns}
           rowKey="id_siswa"
           loading={loading}
           pagination={{ pageSize: 20 }}
+          mobileTitle={(r) => r.nama_siswa}
+          mobileSubtitle={(r) => r.nisn}
+          excludeFromDetail={['aksi', 'index']}
+          mobileActions={[
+            {
+              key: 'ubah',
+              label: 'Ubah',
+              icon: <EditOutlined />,
+              onClick: openEdit,
+            },
+          ]}
         />
       </Card>
 

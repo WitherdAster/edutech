@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Table, Card, Button, Space, Modal, Form, Input,
+  Card, Button, Space, Modal, Form, Input,
   message, Popconfirm, Typography,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 export default function MapelAdmin() {
   const { user } = useAuth();
@@ -106,12 +107,31 @@ export default function MapelAdmin() {
           </Space>
         }
       >
-        <Table
+        <ResponsiveTable
           dataSource={data}
           columns={columns}
           rowKey="id_mapel"
           loading={loading}
           pagination={{ pageSize: 20 }}
+          mobileTitle={(r) => r.nama_mapel}
+          mobileSubtitle={(r) => `ID: ${r.id_mapel}`}
+          excludeFromDetail={['aksi']}
+          mobileActions={[
+            {
+              key: 'edit',
+              label: 'Edit',
+              icon: <EditOutlined />,
+              onClick: openEdit,
+            },
+            {
+              key: 'delete',
+              label: 'Hapus',
+              icon: <DeleteOutlined />,
+              danger: true,
+              confirmText: 'Hapus mapel ini?',
+              onClick: (record) => handleDelete(record.id_mapel),
+            },
+          ]}
         />
       </Card>
 

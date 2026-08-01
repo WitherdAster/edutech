@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Card, Select, Table, Button, Space, Modal, Form, TimePicker, Typography,
+  Card, Select, Button, Space, Modal, Form, TimePicker, Typography,
   Tag, message, Popconfirm,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
-import dayjs from 'dayjs';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
 
@@ -193,12 +193,25 @@ export default function JadwalAdmin() {
           />
         </Space>
 
-        <Table
+        <ResponsiveTable
           dataSource={jadwal}
           columns={columns}
           rowKey="id_jadwal"
           loading={loading}
           pagination={false}
+          mobileTitle={(r) => r.nama_mapel || '-'}
+          mobileSubtitle={(r) => [r.hari, r.jam_mulai && r.jam_selesai ? `${r.jam_mulai}-${r.jam_selesai}` : null].filter(Boolean).join(' · ')}
+          excludeFromDetail={['aksi']}
+          mobileActions={[
+            {
+              key: 'delete',
+              label: 'Hapus',
+              icon: <DeleteOutlined />,
+              danger: true,
+              confirmText: 'Hapus jadwal ini?',
+              onClick: (record) => handleDelete(record.id_jadwal),
+            },
+          ]}
         />
       </Card>
 

@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Table, Select, Input, Card, Space, Button, Modal, Form, DatePicker,
+  Select, Input, Card, Space, Button, Modal, Form, DatePicker,
   message, Popconfirm,
 } from 'antd';
 import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
+import ResponsiveTable from '../components/ResponsiveTable';
 
 export default function Siswa() {
   const { user } = useAuth();
@@ -155,12 +156,31 @@ export default function Siswa() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </Space>
-        <Table
+        <ResponsiveTable
           dataSource={siswa}
           columns={columns}
           rowKey="id_siswa"
           loading={loading}
           pagination={{ pageSize: 20 }}
+          mobileTitle={(r) => r.nama_siswa}
+          mobileSubtitle={(r) => [r.kelas, r.jurusan].filter(Boolean).join(' · ') || '-'}
+          excludeFromDetail={['aksi']}
+          mobileActions={user?.role === 'tu' ? [
+            {
+              key: 'edit',
+              label: 'Edit',
+              icon: <EditOutlined />,
+              onClick: openEdit,
+            },
+            {
+              key: 'delete',
+              label: 'Hapus',
+              icon: <DeleteOutlined />,
+              danger: true,
+              confirmText: 'Hapus siswa ini?',
+              onClick: (record) => handleDelete(record.id_siswa),
+            },
+          ] : []}
         />
       </Card>
 
