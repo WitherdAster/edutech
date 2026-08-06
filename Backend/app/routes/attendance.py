@@ -131,6 +131,15 @@ async def attendance(
         ).first()
 
         if existing:
+            effective_status = existing.status_manual if existing.status_manual else existing.status
+
+            if effective_status == "Hadir":
+                return {
+                    "status": "Sudah Hadir",
+                    "nama_siswa": siswa.nama_siswa,
+                    "similarity": similarity,
+                }
+
             existing.status = "Hadir"
             existing.check_time = datetime.now()
             existing.similarity = similarity
