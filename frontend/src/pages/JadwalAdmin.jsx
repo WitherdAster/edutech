@@ -107,8 +107,8 @@ export default function JadwalAdmin() {
       message.success('Jadwal berhasil ditambahkan');
       setModalOpen(false);
       fetchJadwal();
-    } catch {
-      // validation error
+    } catch (error) {
+      message.error(error?.response?.data?.detail || 'Gagal menyimpan jadwal');
     } finally {
       setSubmitting(false);
     }

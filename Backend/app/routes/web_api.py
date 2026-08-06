@@ -1130,6 +1130,21 @@ def list_jadwal(
     ]
 
 
+def _conflict_jadwal(db, hari, jam_mulai, jam_selesai, id_kelas=None, id_user=None, exclude_id=None):
+    query = db.query(Jadwal).filter(
+        Jadwal.hari == hari,
+        Jadwal.jam_mulai < jam_selesai,
+        jam_mulai < Jadwal.jam_selesai,
+    )
+    if exclude_id is not None:
+        query = query.filter(Jadwal.id_jadwal != exclude_id)
+    if id_kelas is not None:
+        query = query.filter(Jadwal.id_kelas == id_kelas)
+    if id_user is not None:
+        query = query.filter(Jadwal.id_user == id_user)
+    return query.first()
+
+
 @router.post("/admin/jadwal")
 def create_jadwal(
     body: CreateJadwalRequest,
@@ -1150,6 +1165,20 @@ def create_jadwal(
 
     if jam_mulai >= jam_selesai:
         raise HTTPException(status_code=400, detail="jam_mulai harus sebelum jam_selesai")
+
+    conflict_kelas = _conflict_jadwal(db, body.hari, jam_mulai, jam_selesai, id_kelas=body.id_kelas)
+    if conflict_kelas:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Sudah ada jadwal di kelas ini pada jam {conflict_kelas.jam_mulai.strftime('%H:%M')}-{conflict_kelas.jam_selesai.strftime('%H:%M')}",
+        )
+
+    conflict_guru = _conflict_jadwal(db, body.hari, jam_mulai, jam_selesai, id_user=body.id_user)
+    if conflict_guru:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Guru sudah memiliki jadwal pada jam {conflict_guru.jam_mulai.strftime('%H:%M')}-{conflict_guru.jam_selesai.strftime('%H:%M')}",
+        )
 
     jadwal = Jadwal(
         id_mapel=body.id_mapel,
@@ -1179,20 +1208,53 @@ def update_jadwal(
     if not jadwal:
         raise HTTPException(status_code=404, detail="Jadwal tidak ditemukan")
 
+    eff_id_mapel = jadwal.id_mapel
+    eff_id_user = jadwal.id_user
+    eff_mulai = jadwal.jam_mulai
+    eff_selesai = jadwal.jam_selesai
+
     if body.id_mapel is not None:
-        jadwal.id_mapel = body.id_mapel
+        eff_id_mapel = body.id_mapel
     if body.id_user is not None:
-        jadwal.id_user = body.id_user
+        eff_id_user = body.id_user
     if body.jam_mulai is not None:
         try:
-            jadwal.jam_mulai = datetime.strptime(body.jam_mulai, "%H:%M").time()
+            eff_mulai = datetime.strptime(body.jam_mulai, "%H:%M").time()
         except ValueError:
             raise HTTPException(status_code=400, detail="Format jam_mulai harus HH:MM")
     if body.jam_selesai is not None:
         try:
-            jadwal.jam_selesai = datetime.strptime(body.jam_selesai, "%H:%M").time()
+            eff_selesai = datetime.strptime(body.jam_selesai, "%H:%M").time()
         except ValueError:
             raise HTTPException(status_code=400, detail="Format jam_selesai harus HH:MM")
+
+    if eff_mulai >= eff_selesai:
+        raise HTTPException(status_code=400, detail="jam_mulai harus sebelum jam_selesai")
+
+    conflict_kelas = _conflict_jadwal(
+        db, jadwal.hari, eff_mulai, eff_selesai,
+        id_kelas=jadwal.id_kelas, exclude_id=jadwal.id_jadwal,
+    )
+    if conflict_kelas:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Sudah ada jadwal di kelas ini pada jam {conflict_kelas.jam_mulai.strftime('%H:%M')}-{conflict_kelas.jam_selesai.strftime('%H:%M')}",
+        )
+
+    conflict_guru = _conflict_jadwal(
+        db, jadwal.hari, eff_mulai, eff_selesai,
+        id_user=eff_id_user, exclude_id=jadwal.id_jadwal,
+    )
+    if conflict_guru:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Guru sudah memiliki jadwal pada jam {conflict_guru.jam_mulai.strftime('%H:%M')}-{conflict_guru.jam_selesai.strftime('%H:%M')}",
+        )
+
+    jadwal.id_mapel = eff_id_mapel
+    jadwal.id_user = eff_id_user
+    jadwal.jam_mulai = eff_mulai
+    jadwal.jam_selesai = eff_selesai
 
     db.commit()
     return {"message": "Jadwal berhasil diperbarui"}
