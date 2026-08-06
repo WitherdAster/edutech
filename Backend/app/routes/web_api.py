@@ -3,7 +3,7 @@ from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -486,6 +486,8 @@ def update_absensi(
 @router.get("/absensi/export")
 def export_absensi(
     tanggal: str | None = Query(None),
+    tanggal_mulai: str | None = Query(None),
+    tanggal_selesai: str | None = Query(None),
     id_kelas: int | None = Query(None),
     id_mapel: int | None = Query(None),
     user: User = Depends(get_current_user),
@@ -494,16 +496,29 @@ def export_absensi(
     if user.role != "tu":
         raise HTTPException(status_code=403, detail="Hanya TU yang dapat mengexport data")
 
-    if tanggal:
+    def _parse_date(value, field):
         try:
-            parsed = datetime.strptime(tanggal, "%Y-%m-%d").date()
+            return datetime.strptime(value, "%Y-%m-%d").date()
         except ValueError:
-            raise HTTPException(status_code=400, detail="Format tanggal salah (YYYY-MM-DD)")
-    else:
-        parsed = date.today()
+            raise HTTPException(status_code=400, detail=f"Format {field} salah (YYYY-MM-DD)")
 
-    day_start = datetime(parsed.year, parsed.month, parsed.day)
-    day_end = datetime(parsed.year, parsed.month, parsed.day + 1)
+    if tanggal_mulai or tanggal_selesai:
+        if not (tanggal_mulai and tanggal_selesai):
+            raise HTTPException(status_code=400, detail="tanggal_mulai dan tanggal_selesai harus diisi bersama")
+        start_date = _parse_date(tanggal_mulai, "tanggal_mulai")
+        end_date = _parse_date(tanggal_selesai, "tanggal_selesai")
+        if start_date > end_date:
+            raise HTTPException(status_code=400, detail="tanggal_mulai harus sebelum tanggal_selesai")
+        start = datetime(start_date.year, start_date.month, start_date.day)
+        end = datetime(end_date.year, end_date.month, end_date.day + 1)
+    elif tanggal:
+        parsed = _parse_date(tanggal, "tanggal")
+        start = datetime(parsed.year, parsed.month, parsed.day)
+        end = datetime(parsed.year, parsed.month, parsed.day + 1)
+    else:
+        today = date.today()
+        start = datetime(today.year, today.month, today.day)
+        end = datetime(today.year, today.month, today.day + 1)
 
     query_records = (
         db.query(Attendance)
@@ -513,17 +528,40 @@ def export_absensi(
             joinedload(Attendance.jadwal_rel).joinedload(Jadwal.user_rel),
         )
         .filter(
-            Attendance.check_time >= day_start,
-            Attendance.check_time < day_end,
+            Attendance.check_time >= start,
+            Attendance.check_time < end,
         )
     )
 
     if id_kelas:
         query_records = query_records.join(Student).filter(Student.id_kelas == id_kelas)
 
+    filtered_mapel_name = None
     if id_mapel:
+        mapel_row = db.query(MataPelajaran).filter(MataPelajaran.id_mapel == id_mapel).first()
+        filtered_mapel_name = mapel_row.nama_mapel if mapel_row else None
+
         jadwal_ids = db.query(Jadwal.id_jadwal).filter(Jadwal.id_mapel == id_mapel).subquery()
-        query_records = query_records.filter(Attendance.id_jadwal.in_(jadwal_ids))
+        siswa_with_manual = (
+            db.query(Attendance.id_siswa)
+            .filter(
+                Attendance.check_time >= start,
+                Attendance.check_time < end,
+                Attendance.id_jadwal.in_(jadwal_ids),
+            )
+            .subquery()
+        )
+        # ikutsertakan record scan (base, id_jadwal NULL) agar siswa yang "Hadir" via
+        # scan wajah tetap masuk ke export per mapel; kecualikan yang sudah punya record manual
+        query_records = query_records.filter(
+            or_(
+                Attendance.id_jadwal.in_(jadwal_ids),
+                and_(
+                    Attendance.id_jadwal == None,
+                    ~Attendance.id_siswa.in_(siswa_with_manual),
+                ),
+            )
+        )
 
     records = query_records.order_by(Attendance.check_time.desc()).all()
 
@@ -553,7 +591,10 @@ def export_absensi(
         status_display = rec.status_manual if rec.status_manual else rec.status
         siswa = rec.siswa_rel
         kelas_rel = siswa.kelas_rel if siswa else None
-        mapel_name = rec.jadwal_rel.mapel_rel.nama_mapel if rec.jadwal_rel and rec.jadwal_rel.mapel_rel else ("-" if rec.id_jadwal else "Base")
+        if rec.id_jadwal is None and filtered_mapel_name:
+            mapel_name = filtered_mapel_name
+        else:
+            mapel_name = rec.jadwal_rel.mapel_rel.nama_mapel if rec.jadwal_rel and rec.jadwal_rel.mapel_rel else ("-" if rec.id_jadwal else "Base")
         guru_name = rec.jadwal_rel.user_rel.nama if rec.jadwal_rel and rec.jadwal_rel.user_rel else "-"
         row = [
             idx,
@@ -581,7 +622,13 @@ def export_absensi(
     wb.save(output)
     output.seek(0)
 
-    filename = f"rekap_absensi_{tanggal or date.today().isoformat()}.xlsx"
+    if tanggal_mulai and tanggal_selesai:
+        label = f"{tanggal_mulai}_sampai_{tanggal_selesai}"
+    elif tanggal:
+        label = tanggal
+    else:
+        label = date.today().isoformat()
+    filename = f"rekap_absensi_{label}.xlsx"
     return StreamingResponse(
         output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

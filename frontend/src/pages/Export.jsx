@@ -11,7 +11,7 @@ export default function ExportPage() {
   const [mapelList, setMapelList] = useState([]);
   const [idKelas, setIdKelas] = useState(null);
   const [idMapel, setIdMapel] = useState(null);
-  const [tanggal, setTanggal] = useState(dayjs());
+  const [range, setRange] = useState([dayjs(), dayjs()]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -31,7 +31,15 @@ export default function ExportPage() {
   const handleExport = async () => {
     setLoading(true);
     try {
-      const params = { tanggal: tanggal.format('YYYY-MM-DD') };
+      if (!range || !range[0] || !range[1]) {
+        message.warning('Pilih jangka waktu terlebih dahulu');
+        return;
+      }
+
+      const params = {
+        tanggal_mulai: range[0].format('YYYY-MM-DD'),
+        tanggal_selesai: range[1].format('YYYY-MM-DD'),
+      };
       if (idKelas) params.id_kelas = idKelas;
       if (idMapel) params.id_mapel = idMapel;
 
@@ -43,7 +51,7 @@ export default function ExportPage() {
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `rekap_absensi_${tanggal.format('YYYY-MM-DD')}.xlsx`);
+      link.setAttribute('download', `rekap_absensi_${range[0].format('YYYY-MM-DD')}_${range[1].format('YYYY-MM-DD')}.xlsx`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -62,10 +70,14 @@ export default function ExportPage() {
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <Typography.Text>
           Download rekap absensi dalam format Excel. Data akan mencakup semua siswa
-          beserta status kehadiran per mata pelajaran pada tanggal yang dipilih.
+          beserta status kehadiran per mata pelajaran pada jangka waktu yang dipilih.
         </Typography.Text>
         <Space style={{ flexWrap: 'wrap' }}>
-          <DatePicker value={tanggal} onChange={(d) => setTanggal(d || dayjs())} />
+          <DatePicker.RangePicker
+            value={range}
+            onChange={(v) => setRange(v || [dayjs(), dayjs()])}
+            allowClear={false}
+          />
           <Select
             placeholder="Filter Kelas (opsional)"
             allowClear
