@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Card, Select, Button, Space, Modal, Form, TimePicker, Typography,
-  Tag, message, Popconfirm,
+  Tag, message, Popconfirm, notification,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import api from '../api';
@@ -108,7 +108,21 @@ export default function JadwalAdmin() {
       setModalOpen(false);
       fetchJadwal();
     } catch (error) {
-      message.error(error?.response?.data?.detail || 'Gagal menyimpan jadwal');
+      if (error?.errorFields) {
+        // validasi form — antd menampilkan pesan pada field yang bersangkutan
+      } else if (error?.response?.data?.detail) {
+        notification.error({
+          message: 'Jadwal tidak dapat disimpan',
+          description: error.response.data.detail,
+          placement: 'topRight',
+        });
+      } else {
+        notification.error({
+          message: 'Gagal menyimpan jadwal',
+          description: 'Terjadi kesalahan, silakan coba lagi.',
+          placement: 'topRight',
+        });
+      }
     } finally {
       setSubmitting(false);
     }
