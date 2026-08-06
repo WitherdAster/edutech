@@ -36,6 +36,15 @@ def on_startup():
             conn.commit()
             # Eksekusi query
 
+    mapel_columns = [c["name"] for c in inspector.get_columns("mata_pelajaran")]
+
+    if "id_jurusan" not in mapel_columns:
+    # Jika field id_jurusan belum ada di tabel mata_pelajaran
+
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE mata_pelajaran ADD COLUMN id_jurusan INT NULL AFTER nama_mapel"))
+            conn.commit()
+
     if "mata_pelajaran" not in [t for t in inspector.get_table_names()]:
     # Jika saat di inspect tadi tidak ada yang namanya tabel mata_pelajaran
 

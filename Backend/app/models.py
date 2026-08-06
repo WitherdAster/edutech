@@ -11,6 +11,7 @@ class Jurusan(Base):
     nama_jurusan = Column(String(100))
 
     kelas_list = relationship("Kelas", back_populates="jurusan")
+    mapel_list = relationship("MataPelajaran", back_populates="jurusan_rel")
 
 
 class Kelas(Base):
@@ -130,8 +131,10 @@ class MataPelajaran(Base):
 
     id_mapel = Column(Integer, primary_key=True, index=True)
     nama_mapel = Column(String(100), nullable=False)
+    id_jurusan = Column(Integer, ForeignKey("jurusan.id_jurusan"), nullable=True)
 
     jadwal_list = relationship("Jadwal", back_populates="mapel_rel")
+    jurusan_rel = relationship("Jurusan", back_populates="mapel_list")
 
 
 class Jadwal(Base):

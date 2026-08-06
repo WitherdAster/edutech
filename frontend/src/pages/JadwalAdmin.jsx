@@ -16,6 +16,7 @@ export default function JadwalAdmin() {
   const [jurusanList, setJurusanList] = useState([]);
   const [guruList, setGuruList] = useState([]);
   const [mapelList, setMapelList] = useState([]);
+  const [kelasMapel, setKelasMapel] = useState([]);
   const [filterIdJurusan, setFilterIdJurusan] = useState(null);
   const [idKelas, setIdKelas] = useState(null);
   const [filterHari, setFilterHari] = useState(null);
@@ -61,6 +62,18 @@ export default function JadwalAdmin() {
   useEffect(() => {
     setIdKelas(null);
   }, [filterIdJurusan]);
+
+  useEffect(() => {
+    if (!idKelas) {
+      setKelasMapel([]);
+      return;
+    }
+    api.get('/mapel', { params: { id_kelas: idKelas } }).then((res) => {
+      setKelasMapel(res.data);
+    });
+  }, [idKelas]);
+
+  const displayMapel = idKelas ? kelasMapel : mapelList;
 
   const filteredKelas = kelas.filter(
     (k) => !filterIdJurusan || k.id_jurusan === filterIdJurusan
@@ -178,7 +191,7 @@ export default function JadwalAdmin() {
             style={{ width: 250 }}
             value={filterIdMapel}
             onChange={(v) => setFilterIdMapel(v)}
-            options={mapelList.map((m) => ({
+            options={displayMapel.map((m) => ({
               value: m.id_mapel,
               label: m.nama_mapel,
             }))}
@@ -242,7 +255,8 @@ export default function JadwalAdmin() {
             <Select
               showSearch
               placeholder="Cari mapel..."
-              options={mapelList.map((m) => ({ value: m.id_mapel, label: m.nama_mapel }))}
+              options={kelasMapel.map((m) => ({ value: m.id_mapel, label: m.nama_mapel }))}
+              notFoundContent="Tidak ada mapel untuk kelas ini"
             />
           </Form.Item>
           <Form.Item name="id_user" label="Guru"

@@ -3,6 +3,7 @@ from io import BytesIO
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
@@ -80,6 +81,7 @@ class UpdateSiswaRequest(BaseModel):
 
 class CreateMapelRequest(BaseModel):
     nama_mapel: str
+    id_jurusan: int | None = None
 
 
 class CreateJurusanRequest(BaseModel):
@@ -987,12 +989,32 @@ def delete_siswa(
 
 @router.get("/mapel")
 def list_mapel(
+    id_kelas: int | None = Query(None),
+    id_jurusan: int | None = Query(None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    mapel_list = db.query(MataPelajaran).order_by(MataPelajaran.nama_mapel).all()
+    query = db.query(MataPelajaran)
+
+    if id_kelas:
+        kelas = db.query(Kelas).filter(Kelas.id_kelas == id_kelas).first()
+        if not kelas:
+            raise HTTPException(status_code=404, detail="Kelas tidak ditemukan")
+        id_jurusan = kelas.id_jurusan
+
+    if id_jurusan is not None:
+        query = query.filter(
+            or_(MataPelajaran.id_jurusan == id_jurusan, MataPelajaran.id_jurusan == None)
+        )
+
+    mapel_list = query.order_by(MataPelajaran.nama_mapel).all()
     return [
-        {"id_mapel": m.id_mapel, "nama_mapel": m.nama_mapel}
+        {
+            "id_mapel": m.id_mapel,
+            "nama_mapel": m.nama_mapel,
+            "id_jurusan": m.id_jurusan,
+            "jurusan": m.jurusan_rel.nama_jurusan if m.jurusan_rel else None,
+        }
         for m in mapel_list
     ]
 
@@ -1006,11 +1028,16 @@ def create_mapel(
     if user.role != "tu":
         raise HTTPException(status_code=403, detail="Hanya TU yang dapat menambah data mapel")
 
-    mapel = MataPelajaran(nama_mapel=body.nama_mapel)
+    mapel = MataPelajaran(nama_mapel=body.nama_mapel, id_jurusan=body.id_jurusan)
     db.add(mapel)
     db.commit()
     db.refresh(mapel)
-    return {"id_mapel": mapel.id_mapel, "nama_mapel": mapel.nama_mapel}
+    return {
+        "id_mapel": mapel.id_mapel,
+        "nama_mapel": mapel.nama_mapel,
+        "id_jurusan": mapel.id_jurusan,
+        "jurusan": mapel.jurusan_rel.nama_jurusan if mapel.jurusan_rel else None,
+    }
 
 
 @router.put("/admin/mapel/{id_mapel}")
@@ -1028,6 +1055,7 @@ def update_mapel(
         raise HTTPException(status_code=404, detail="Mapel tidak ditemukan")
 
     mapel.nama_mapel = body.nama_mapel
+    mapel.id_jurusan = body.id_jurusan
     db.commit()
     return {"message": "Mapel berhasil diperbarui"}
 

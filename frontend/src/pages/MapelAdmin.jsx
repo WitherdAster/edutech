@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Card, Button, Space, Modal, Form, Input,
+  Card, Button, Space, Modal, Form, Input, Select,
   message, Popconfirm, Typography,
 } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -11,6 +11,7 @@ import ResponsiveTable from '../components/ResponsiveTable';
 export default function MapelAdmin() {
   const { user } = useAuth();
   const [data, setData] = useState([]);
+  const [jurusanList, setJurusanList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingMapel, setEditingMapel] = useState(null);
@@ -29,6 +30,10 @@ export default function MapelAdmin() {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    api.get('/jurusan').then((res) => setJurusanList(res.data));
+  }, []);
+
   const openCreate = () => {
     setEditingMapel(null);
     form.resetFields();
@@ -37,7 +42,10 @@ export default function MapelAdmin() {
 
   const openEdit = (record) => {
     setEditingMapel(record);
-    form.setFieldsValue({ nama_mapel: record.nama_mapel });
+    form.setFieldsValue({
+      nama_mapel: record.nama_mapel,
+      id_jurusan: record.id_jurusan ?? undefined,
+    });
     setModalOpen(true);
   };
 
@@ -46,11 +54,16 @@ export default function MapelAdmin() {
       const values = await form.validateFields();
       setSubmitting(true);
 
+      const payload = {
+        nama_mapel: values.nama_mapel,
+        id_jurusan: values.id_jurusan ?? null,
+      };
+
       if (editingMapel) {
-        await api.put(`/admin/mapel/${editingMapel.id_mapel}`, values);
+        await api.put(`/admin/mapel/${editingMapel.id_mapel}`, payload);
         message.success('Mapel berhasil diperbarui');
       } else {
-        await api.post('/admin/mapel', values);
+        await api.post('/admin/mapel', payload);
         message.success('Mapel berhasil ditambahkan');
       }
 
@@ -80,6 +93,10 @@ export default function MapelAdmin() {
   const columns = [
     { title: 'ID', dataIndex: 'id_mapel', key: 'id_mapel', width: 80 },
     { title: 'Nama Mata Pelajaran', dataIndex: 'nama_mapel', key: 'nama_mapel' },
+    {
+      title: 'Jurusan', dataIndex: 'jurusan', key: 'jurusan', width: 200,
+      render: (_, record) => record.jurusan || 'Umum',
+    },
     {
       title: 'Aksi', key: 'aksi', width: 150,
       render: (_, record) => (
@@ -114,7 +131,7 @@ export default function MapelAdmin() {
           loading={loading}
           pagination={{ pageSize: 20 }}
           mobileTitle={(r) => r.nama_mapel}
-          mobileSubtitle={(r) => `ID: ${r.id_mapel}`}
+          mobileSubtitle={(r) => (r.jurusan ? r.jurusan : 'Umum')}
           excludeFromDetail={['aksi']}
           mobileActions={[
             {
@@ -148,6 +165,17 @@ export default function MapelAdmin() {
           <Form.Item name="nama_mapel" label="Nama Mata Pelajaran"
             rules={[{ required: true, message: 'Masukkan nama mata pelajaran' }]}>
             <Input />
+          </Form.Item>
+          <Form.Item name="id_jurusan" label="Jurusan"
+            tooltip="Kosongkan untuk mapel umum (berlaku untuk semua jurusan)">
+            <Select
+              allowClear
+              placeholder="Pilih jurusan (Umum)"
+              options={jurusanList.map((j) => ({
+                value: j.id_jurusan,
+                label: j.nama_jurusan,
+              }))}
+            />
           </Form.Item>
         </Form>
       </Modal>
