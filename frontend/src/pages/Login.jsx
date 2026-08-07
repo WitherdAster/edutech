@@ -40,14 +40,14 @@ export default function Login() {
   };
 
   return (
-    <div style={{
+    <div className="login-bg" style={{
       minHeight: '100vh', display: 'flex', justifyContent: 'center',
-      alignItems: 'center', background: '#f0f2f5', padding: 16,
+      alignItems: 'center', padding: 16,
     }}>
-      <Card style={{ width: 360, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+      <Card style={{ width: 360, borderRadius: 24, border: 'none' }}>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ textAlign: 'center' }}>
-            <Typography.Title level={3} style={{ margin: 0 }}>EduTech</Typography.Title>
+            <Typography.Title level={3} style={{ margin: 0, fontWeight: 800 }}>EduTech</Typography.Title>
             <Typography.Text type="secondary">Sistem Absensi Sekolah</Typography.Text>
           </div>
           <Form layout="vertical" onFinish={onFinish} autoComplete="off">
@@ -58,7 +58,8 @@ export default function Login() {
               <Input.Password prefix={<LockOutlined />} placeholder="Password" size="large" />
             </Form.Item>
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block size="large">
+              <Button type="primary" htmlType="submit" loading={loading} block size="large"
+                className="btn-cta">
                 Login
               </Button>
             </Form.Item>

@@ -92,7 +92,8 @@ export default function ExportPage() {
             onChange={(v) => setIdMapel(v)}
             options={mapelList.map((m) => ({ value: m.id_mapel, label: m.nama_mapel }))}
           />
-          <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport} loading={loading}>
+          <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport} loading={loading}
+            className="btn-cta">
             Download Excel
           </Button>
         </Space>

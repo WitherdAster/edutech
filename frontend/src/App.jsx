@@ -20,7 +20,34 @@ import KelasAdmin from './pages/KelasAdmin';
 
 export default function App() {
   return (
-    <ConfigProvider>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#1B2A4A',
+          colorInfo: '#0F766E',
+          colorWarning: '#F97316',
+          colorBgLayout: '#F8F9FA',
+          colorBgContainer: '#FFFFFF',
+          colorText: '#1F2937',
+          colorTextSecondary: '#6B7280',
+          borderRadius: 12,
+          borderRadiusLG: 20,
+          boxShadow: '0 2px 8px rgba(27,42,74,0.08), 0 8px 24px rgba(27,42,74,0.06)',
+          boxShadowSecondary: '0 1px 3px rgba(27,42,74,0.10), 0 4px 12px rgba(27,42,74,0.08)',
+          fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif",
+        },
+        components: {
+          Button: {
+            borderRadius: 14,
+            controlHeightLG: 44,
+          },
+          Menu: {
+            itemBorderRadius: 12,
+            itemMarginInline: 8,
+          },
+        },
+      }}
+    >
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginSelect />} />

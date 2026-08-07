@@ -25,14 +25,14 @@ export default function LoginSelect() {
   if (user || siswa) return null;
 
   return (
-    <div style={{
+    <div className="login-bg" style={{
       minHeight: '100vh', display: 'flex', justifyContent: 'center',
-      alignItems: 'center', background: '#f0f2f5', padding: 16,
+      alignItems: 'center', padding: 16,
     }}>
-      <Card style={{ width: 360, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+      <Card style={{ width: 360, borderRadius: 24, border: 'none' }}>
         <Space direction="vertical" size="large" style={{ width: '100%' }}>
           <div style={{ textAlign: 'center' }}>
-            <Typography.Title level={3} style={{ margin: 0 }}>EduTech</Typography.Title>
+            <Typography.Title level={3} style={{ margin: 0, fontWeight: 800 }}>EduTech</Typography.Title>
             <Typography.Text type="secondary">Sistem Absensi Sekolah</Typography.Text>
           </div>
           <div style={{ textAlign: 'center' }}>
@@ -43,11 +43,12 @@ export default function LoginSelect() {
             block
             icon={<TeamOutlined />}
             onClick={() => navigate('/login/instansi')}
-            style={{ height: 56, fontSize: 16, textAlign: 'left', paddingLeft: 24 }}
+            className="btn-cta"
+            style={{ height: 56, fontSize: 16, textAlign: 'left', paddingLeft: 24, borderRadius: 18 }}
           >
             <div>
-              <div style={{ fontWeight: 600 }}>Instansi</div>
-              <div style={{ fontSize: 12, opacity: 0.6 }}>Login untuk Guru & TU</div>
+              <div style={{ fontWeight: 700 }}>Instansi</div>
+              <div style={{ fontSize: 12, opacity: 0.85 }}>Login untuk Guru & TU</div>
             </div>
           </Button>
           <Button
@@ -55,10 +56,10 @@ export default function LoginSelect() {
             block
             icon={<UserOutlined />}
             onClick={() => navigate('/login/siswa')}
-            style={{ height: 56, fontSize: 16, textAlign: 'left', paddingLeft: 24 }}
+            style={{ height: 56, fontSize: 16, textAlign: 'left', paddingLeft: 24, borderRadius: 18 }}
           >
             <div>
-              <div style={{ fontWeight: 600 }}>Siswa</div>
+              <div style={{ fontWeight: 700 }}>Siswa</div>
               <div style={{ fontSize: 12, opacity: 0.6 }}>Login untuk Orang Tua / Siswa</div>
             </div>
           </Button>

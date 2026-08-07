@@ -7,4 +7,42 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  background: #F8F9FA;
+  color: #1F2937;
+}
+
+/* Soft Neumorphism / Modern Soft UI */
+.ant-card {
+  box-shadow: 0 2px 8px rgba(27, 42, 74, 0.08), 0 8px 24px rgba(27, 42, 74, 0.06);
+  border: 1px solid rgba(27, 42, 74, 0.04);
+}
+
+.ant-card-head {
+  font-weight: 700;
+}
+
+/* CTA utama memakai aksen warm orange */
+.btn-cta {
+  background: #F97316;
+  border-color: #F97316;
+  box-shadow: 0 1px 3px rgba(249, 115, 22, 0.3), 0 4px 12px rgba(249, 115, 22, 0.25);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-cta:hover,
+.btn-cta:focus {
+  background: #FB923C !important;
+  border-color: #FB923C !important;
+  color: #fff !important;
+}
+
+/* Sidebar & header navy */
+.sidebar-navy {
+  background: #1B2A4A;
+}
+
+/* Latar layar login: krem lembut */
+.login-bg {
+  background: linear-gradient(160deg, #F8F9FA 0%, #EDF1F7 100%);
 }
