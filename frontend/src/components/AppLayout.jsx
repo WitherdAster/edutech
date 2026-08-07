@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Layout, Menu, Button, Typography, Grid,
+  Layout, Menu, Button, Typography, Grid, Modal,
 } from 'antd';
 import {
   DashboardOutlined, TeamOutlined, CheckSquareOutlined,
@@ -43,6 +43,17 @@ export default function AppLayout() {
     if (isMobile) setSidebarOpen(false);
   };
 
+  const confirmLogout = () => {
+    Modal.confirm({
+      title: 'Yakin ingin logout?',
+      content: 'Anda akan kembali ke halaman login.',
+      okText: 'Logout',
+      okType: 'danger',
+      cancelText: 'Batal',
+      onOk: logout,
+    });
+  };
+
   if (isMobile) {
     return (
       <Layout style={{ minHeight: '100vh' }}>
@@ -53,7 +64,7 @@ export default function AppLayout() {
           <Button type="text" icon={<MenuOutlined />} onClick={() => setSidebarOpen(!sidebarOpen)}
             style={{ color: '#fff', fontSize: 20 }} />
           <Typography.Text style={{ color: '#fff', fontSize: 18, fontWeight: 700 }}>EduTech</Typography.Text>
-          <Button type="text" icon={<LogoutOutlined />} onClick={logout}
+          <Button type="text" icon={<LogoutOutlined />} onClick={confirmLogout}
             style={{ color: '#fff' }} />
         </Header>
 
@@ -99,7 +110,7 @@ export default function AppLayout() {
           background: '#F8F9FA', padding: '0 24px', display: 'flex',
           justifyContent: 'flex-end', alignItems: 'center', borderBottom: '1px solid rgba(27,42,74,0.06)',
         }}>
-          <Button type="text" icon={<LogoutOutlined />} onClick={logout} style={{ fontWeight: 600 }}>Logout</Button>
+          <Button type="text" icon={<LogoutOutlined />} onClick={confirmLogout} style={{ fontWeight: 600 }}>Logout</Button>
         </Header>
         <Content style={{ margin: 24, padding: 0, borderRadius: 20, minHeight: 280 }}>
           <Outlet />
